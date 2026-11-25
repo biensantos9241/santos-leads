@@ -94,26 +94,48 @@ details.hist ol{margin:4px 0 0 18px;padding:0;line-height:1.5}
 #iambar button.on{background:#0B3C5D;color:#fff;border-color:#0B3C5D}
 #newbadge{background:#CC0000;color:#fff;border-radius:14px;padding:6px 10px;font-size:13px;font-weight:800;border:0;min-height:36px}
 #callnow{display:none;margin:10px 12px 0;padding:12px;border-radius:12px;background:#1565C0;color:#fff;font-size:15px;line-height:1.4}
-#callnow b.ttl{display:block;font-size:17px;margin-bottom:6px}
-#callnow .cn{display:flex;align-items:center;gap:8px;background:#1E88E5;border-radius:10px;padding:8px 10px;margin-top:6px;color:#fff;text-decoration:none}
-#callnow .cn .nm{font-weight:800;flex:1}
-#callnow .cdown{font-weight:800;background:#fff;color:#1565C0;border-radius:8px;padding:3px 8px;font-size:12px;white-space:nowrap}
-#callnow .cncall{background:#fff;color:#1E8E3E;border-radius:10px;padding:8px 10px;font-weight:800;text-decoration:none;font-size:15px}
+#callnow b.ttl{display:block;font-size:17px;margin-bottom:6px;letter-spacing:normal;-webkit-text-stroke:0;text-shadow:none}
+/* v14: stacked lead cards — prevent flex overflow / stretched names */
+#callnow .cn,.leadrow{display:flex;align-items:flex-start;gap:10px;min-width:0}
+#callnow .cn{background:#1E88E5;border-radius:12px;padding:10px 10px;margin-top:8px;color:#fff;text-decoration:none}
+.ldet{flex:1 1 auto;min-width:0;letter-spacing:normal;word-spacing:normal;-webkit-text-stroke:0;text-shadow:none;transform:none;filter:none;overflow-wrap:anywhere;word-break:break-word;white-space:normal}
+.l1{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:13px;font-weight:700;line-height:1.3;letter-spacing:normal}
+.ltime{white-space:nowrap}
+.l2{font-size:16px;font-weight:700;line-height:1.3;margin:3px 0 4px;letter-spacing:normal;word-spacing:normal;-webkit-text-stroke:0;text-shadow:none;transform:none;filter:none;white-space:normal;overflow-wrap:anywhere}
+.l3,.l4{font-size:14px;font-weight:500;line-height:1.35;letter-spacing:normal;white-space:normal}
+.l5{font-size:12px;font-weight:500;line-height:1.35;margin-top:3px;opacity:.92;letter-spacing:normal}
+#callnow .l2{color:#fff;font-weight:700}
+.card .l2{color:#1d2430}
+.spill{display:inline-block;font-size:11px;font-weight:800;border-radius:8px;padding:2px 7px;letter-spacing:normal;white-space:nowrap;line-height:1.2}
+#callnow .spill{background:#fff;color:#1565C0}
+#callnow .spill.due{background:#fff;color:#CC0000}
+#callnow .spill.soon{background:#FCE8B2;color:#7A4B00}
+#callnow .spill.later{background:#E3F2FD;color:#1565C0}
+.card .spill{background:#E3F2FD;color:#1565C0}
+.card .spill.soon{background:#FCE8B2;color:#7A4B00}
+.card .spill.late{background:#fff;color:#1565C0;border:2px solid #1565C0}
+.card .spill.later{background:#eef1f5;color:#0B3C5D}
+#callnow .cncall,.leadrow .btn.call{flex:0 0 72px;align-self:center;min-height:56px;max-width:80px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;white-space:nowrap;border-radius:12px;font-size:15px;font-weight:800;text-decoration:none;padding:8px 6px;letter-spacing:normal}
+#callnow .cncall{background:#fff;color:#1E8E3E;min-height:52px}
+.card .leadrow{padding:0}
 .card.due{outline:3px solid #1565C0;box-shadow:0 0 0 4px rgba(21,101,192,.18)}
 .card.soon{outline:3px solid #E69121}
 .duepill{display:inline-block;margin-top:6px;font-size:13px;font-weight:800;border-radius:8px;padding:3px 8px;background:#E3F2FD;color:#1565C0}
 .duepill.soon{background:#FCE8B2;color:#7A4B00}
 .duepill.late{background:#fff;color:#1565C0;border:2px solid #1565C0}
-/* v13: Call button color by timing */
 .btn.call.timing-urgent,#callnow .cncall.timing-urgent{background:#CC0000;color:#fff}
 .btn.call.timing-late,#callnow .cncall.timing-late{background:#F9AB00;color:#1d2430}
 .btn.call.timing-ahead,#callnow .cncall.timing-ahead{background:#1E8E3E;color:#fff}
-.timingleg{margin:6px 12px 0;font-size:13px;font-weight:700;color:#0B3C5D;line-height:1.4}
-.timingleg.onblue{margin:8px 0 2px;color:#fff;font-weight:700;font-size:13px}
+.timingleg{margin:6px 12px 0;font-size:13px;font-weight:700;color:#0B3C5D;line-height:1.4;letter-spacing:normal}
+.timingleg.onblue{margin:8px 0 6px;color:#fff;font-weight:700;font-size:13px}
 .timingleg .tdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 4px 0 2px;vertical-align:middle}
 .timingleg .tdot.urgent{background:#CC0000}
 .timingleg .tdot.late{background:#F9AB00}
 .timingleg .tdot.ahead{background:#1E8E3E}
+.l2 .badge{margin-left:6px;vertical-align:middle}
+.st.elig{background:#D9EAD3;color:#1E6B2E}
+.st.noelig{background:#FCE8B2;color:#7A4B00}
+.st.kita{background:#FDE2E1;color:#B00}
 </style>
 </head>
 <body>
@@ -524,8 +546,15 @@ function jumpToLead(){ var id=null; try{ id=new URLSearchParams(location.search)
 function callTiming(l){ var d=dueInfo(l); if (!d || d.state==="called") return ""; if (d.state==="late") return "late"; if (d.state==="due" || d.state==="soon") return "urgent"; if (d.state==="later") return "ahead"; return ""; }
 function timingClass(l, base){ var t=callTiming(l); return t? (base+" timing-"+t) : base; }
 function legendHtml(onBlue){ return '<div class="timingleg'+(onBlue?' onblue':'')+'"><span class="tdot urgent"></span> Red urgent \u00B7 <span class="tdot late"></span> Yellow late \u00B7 <span class="tdot ahead"></span> Green ahead</div>'; }
-function paintCallNow(){ var box=document.getElementById("callnow"), leg=document.getElementById("timingleg"); if (!box) return; var items=leads.filter(function(l){ var d=dueInfo(l); return dueActive(d) && isMine(l); }); if (!items.length){ box.style.display="none"; box.innerHTML=""; if (leg){ leg.style.display="block"; leg.innerHTML=legendHtml(false); } return; } items.sort(function(a,b){ return (dueInfo(a).mins)-(dueInfo(b).mins); }); box.style.display="block"; if (leg) leg.style.display="none"; box.innerHTML='<b class="ttl">\uD83D\uDD14 Call now \u00B7 '+items.length+' lead'+(items.length>1?'s':'')+' at or near their preferred time</b>'+legendHtml(true)+items.map(function(l){ var d=dueInfo(l); return '<div class="cn"><span class="cdown">'+esc(d.label)+'</span><span class="nm">'+esc(l.name)+' <small style="font-weight:500;opacity:.9">\u00B7 '+(l.ctype==="Specific time"?"Doc Bien":esc(assignedCaller(l)))+' \u00B7 '+esc(l.group)+'</small></span>'+(l.phone? '<a class="'+timingClass(l,"cncall")+'" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'">\uD83D\uDCDE Call</a>':'')+'</div>'; }).join(""); }
-function tickDue(){ if (document.getElementById("bye") && document.getElementById("bye").style.display==="block") return; leads.forEach(function(l){ if (!isMine(l)) return; var d=dueInfo(l); if (!dueActive(d)) return; var key=l.id+"@"+d.start; if (d.mins<=0 && d.mins>=-1 && !hasFired(key+"@start")){ markFired(key+"@start"); fireNote("Call now: "+l.name, (l.ctype==="Specific time"?"Preferred call time is now":"Call slot is now")+" \u00B7 "+(l.phone||""), "slot-"+l.id); } else if (d.state==="soon" && !hasFired(key+"@soon")){ markFired(key+"@soon"); fireNote("Call in "+d.mins+" min: "+l.name, assignedCaller(l)+" \u00B7 "+(l.phone||"")+" \u00B7 open Santos Leads to call", "soon-"+l.id); } }); paintCallNow(); var pills=document.querySelectorAll("[data-duepill]"); Array.prototype.forEach.call(pills,function(el){ var l=findLead(el.getAttribute("data-duepill")); var d=l&&dueInfo(l); if (d&&dueActive(d)) el.textContent=d.label; }); }
+function branchOfChoice(l){ var chosen=String(l.branch||"").trim(), nearest=String(l.nearest||"").trim(); if (chosen) return chosen; if (nearest) return nearest+" (nearest)"; return "\u2014 itanong po"; }
+function interestOf(l){ return String(l.group||"").trim() || "\u2014 itanong po"; }
+function callTimeLabel(l){ var start=parseSlot(l.slot); if (start){ var parts=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Manila",weekday:"short",hour:"numeric",minute:"2-digit",hour12:true}).formatToParts(new Date(start)), o={}; parts.forEach(function(p){ o[p.type]=p.value; }); var ap=(o.dayPeriod||"").replace(/\./g,"").toUpperCase(); return (o.weekday||"")+" "+(o.hour||"")+":"+(o.minute||"")+(ap? " "+ap:""); } var t=String(l.docTime||l.pref||"").trim(); if (t && !/^\s*any ?time/i.test(t) && !/^\s*open slot/i.test(t)) return t; return "Open slot"; }
+function shortDueLabel(d){ if (!d) return ""; if (d.state==="late") return "LATE "+fmtMins(-d.mins); if (d.state==="due") return "DUE NOW"; if (d.state==="soon" || d.state==="later") return "in "+fmtMins(d.mins); if (d.state==="called") return "Called today"; return d.label||""; }
+function extraLine(l){ var bits=[]; if (String(l.age||"").trim()) bits.push("Age "+String(l.age).trim()); if (String(l.loc||"").trim()) bits.push(String(l.loc).trim()); var who=assignedCaller(l); if (who) bits.push(who); return bits.join(" \u00B7 "); }
+function tagBits(l){ var t=""; if (l.elig==="Yes") t+=' <span class="st elig">39+ FREE</span>'; else if (l.elig==="No") t+=' <span class="st noelig">under 39</span>'; if (/^y/i.test(l.kita||"")) t+=' <span class="st kita">KITA</span>'; return t; }
+function leadStack(l){ var d=dueInfo(l), pill=shortDueLabel(d), extra=extraLine(l), tags=tagBits(l); return '<div class="ldet"><div class="l1"><span class="ltime">'+esc(callTimeLabel(l))+'</span>'+(pill? ' <span class="spill '+(d&&d.state?esc(d.state):'')+'" data-duepill="'+esc(l.id)+'">'+esc(pill)+'</span>':'')+'</div><div class="l2">'+esc(l.name)+(l.priority? ' <span class="badge '+esc(l.priority)+'">'+esc(l.priority)+'</span>':'')+'</div><div class="l3">Branch: '+esc(branchOfChoice(l))+'</div><div class="l4">Interest: '+esc(interestOf(l))+tags+'</div>'+(extra? '<div class="l5">'+esc(extra)+'</div>':'')+'</div>'; }
+function paintCallNow(){ var box=document.getElementById("callnow"), leg=document.getElementById("timingleg"); if (!box) return; var items=leads.filter(function(l){ var d=dueInfo(l); return dueActive(d) && isMine(l); }); if (!items.length){ box.style.display="none"; box.innerHTML=""; if (leg){ leg.style.display="block"; leg.innerHTML=legendHtml(false); } return; } items.sort(function(a,b){ return (dueInfo(a).mins)-(dueInfo(b).mins); }); box.style.display="block"; if (leg) leg.style.display="none"; box.innerHTML='<b class="ttl">\uD83D\uDD14 Call now \u00B7 '+items.length+' lead'+(items.length>1?'s':'')+' at or near their preferred time</b>'+legendHtml(true)+items.map(function(l){ return '<div class="cn">'+leadStack(l)+(l.phone? '<a class="'+timingClass(l,"cncall")+'" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'">\uD83D\uDCDE Call</a>':'')+'</div>'; }).join(""); }
+function tickDue(){ if (document.getElementById("bye") && document.getElementById("bye").style.display==="block") return; leads.forEach(function(l){ if (!isMine(l)) return; var d=dueInfo(l); if (!dueActive(d)) return; var key=l.id+"@"+d.start; if (d.mins<=0 && d.mins>=-1 && !hasFired(key+"@start")){ markFired(key+"@start"); fireNote("Call now: "+l.name, (l.ctype==="Specific time"?"Preferred call time is now":"Call slot is now")+" \u00B7 "+(l.phone||""), "slot-"+l.id); } else if (d.state==="soon" && !hasFired(key+"@soon")){ markFired(key+"@soon"); fireNote("Call in "+d.mins+" min: "+l.name, assignedCaller(l)+" \u00B7 "+(l.phone||"")+" \u00B7 open Santos Leads to call", "soon-"+l.id); } }); paintCallNow(); var pills=document.querySelectorAll("[data-duepill]"); Array.prototype.forEach.call(pills,function(el){ var l=findLead(el.getAttribute("data-duepill")); var d=l&&dueInfo(l); if (d) el.textContent=shortDueLabel(d); }); }
 function dueHtml(l){ var d=dueInfo(l); if (!dueActive(d)) return ""; return '<div class="duepill '+(d.state==="late"?"late":(d.state==="soon"?"soon":""))+'" data-duepill="'+esc(l.id)+'">\uD83D\uDD14 '+esc(d.label)+'</div>'; }
 document.addEventListener("pointerdown", unlockAudio, {passive:true});
 function render(err){
@@ -557,19 +586,13 @@ function render(err){
     if (vk!==lastType && dueOn && current!=="REMOVED"){ lastType=vk; head = '<div class="sec" style="color:#1565C0">\uD83D\uDD14 Call now \u2014 preferred / slot time</div>'; }
     else if (vk!==lastType && vrank(l) && current!=="REMOVED"){ lastType=vk; head = vrank(l)===2? '<div class="sec" style="color:#1E6B2E">\u2705 Visited (auto-matched) \u2014 confirm &amp; remove</div>' : '<div class="sec" style="color:#7A4B00">\uD83D\uDD0E Possible walk-in \u2014 Doc please confirm</div>'; }
     else if (vk!==lastType){ lastType=vk; head = current==="REMOVED"? '<div class="sec">\uD83D\uDDD1 Removed from the call list (full history kept \u2014 tap Restore to bring back)</div>' : l.ctype==="Specific time"? '<div class="sec">\uD83D\uDCCC Call at their chosen time (Doc Bien personal call)</div>' : '<div class="sec">\uD83D\uDD52 Open slots \u2014 HOT/WARM, then score, then oldest</div>'; }
-    var when = l.ctype==="Specific time"
-      ? '<div class="when pin">\uD83D\uDC68\u200D\u2695\uFE0F Call at: <b>'+esc(l.docTime||l.pref)+'</b>'+(l.slot? ' &middot; '+esc(l.slot):'')+'</div>'
-      : '<div class="when">\uD83D\uDD52 Open slot'+(l.slot? ' &middot; <b>'+esc(l.slot)+'</b>':'')+'</div>';
     return head+'<div class="card'+(st.last&&st.last.id===l.id?' justcalled':'')+(l.removed?' removed':'')+(dueOn?(dnow.state==='late'||dnow.state==='due'?' due':' soon'):'')+'" id="lead-'+esc(l.id)+'" style="border-left-color:'+col+'"><div class="body">'+
-      '<div class="row1"><div class="name">'+esc(l.name)+'</div><span class="score">\u2B50 '+esc(l._score)+'</span><span class="badge '+esc(l.priority)+'">'+esc(l.priority)+'</span></div>'+visitHtml(l)+dueHtml(l)+(l.removed? '<div class="when"><span class="rmtag">REMOVED</span> '+esc(l.localRm==="remove"?"Removed on this phone (syncing)":l.status)+'</div>' : when)+
+      visitHtml(l)+(l.removed? '<div class="when"><span class="rmtag">REMOVED</span> '+esc(l.localRm==="remove"?"Removed on this phone (syncing)":l.status)+'</div>':'')+
+      '<div class="leadrow">'+leadStack(l)+(l.phone? '<a class="btn '+timingClass(l,"call")+'" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row)+'">\uD83D\uDCDE Call</a>':'')+'</div>'+
       (ci.count? '<div class="calls">\uD83D\uDCDE '+ci.count+' call'+(ci.count>1?'s':'')+(ci.when? ' \u00B7 last '+esc(ci.when):'')+(ci.by? ' \u00B7 '+esc(ci.by):'')+(ci.outcome? ' \u00B7 '+esc(ci.outcome):'')+(ci.pending? ' <span class="pend">\u23F3 '+ci.pending+' not synced</span>':'')+'</div>' : '<div class="calls none">\uD83D\uDCDE No calls logged yet</div>')+
-      '<div class="grp" style="color:'+col+'">'+esc(l.group)+'</div>'+
-      '<div class="meta">\uD83D\uDCCD <b>'+esc(l.branch)+'</b> &nbsp; \u23F3 until <b>'+esc(l.deadline)+'</b><br>'+
-      '\uD83C\uDFE0 Location: <b>'+esc(l.loc||'\u2014 itanong po')+'</b>'+(l.nearest&&l.nearest!==l.branch? ' (nearest: '+esc(l.nearest)+')':'')+'<br>'+
-      '\uD83C\uDF82 Age: <b>'+esc(l.age||'\u2014 itanong po')+'</b>'+(l.elig==='Yes'? ' <span class="st" style="background:#D9EAD3;color:#1E6B2E">\u2713 39+ FREE reading eyeglass</span>' : (l.elig==='No'? ' <span class="st" style="background:#FCE8B2;color:#7A4B00">under 39 \u2013 no free eyeglass</span>':''))+'<br>'+'\uD83D\uDC68\u200D\u2695\uFE0F Doc\u2019s call: <b>'+esc(l.docTime||'\u2014 itanong po')+'</b><br>'+
-      (l.summary? '\uD83D\uDCDD <i>'+esc(l.summary)+'</i><br>':'')+'<span class="st">'+esc(l.status)+'</span>'+''+(/^y/i.test(l.kita||'')? ' <span class="st" style="background:#FDE2E1;color:#B00">KITA</span>':'')+(l.pref? ' &nbsp; \uD83D\uDD52 '+esc(l.pref):'')+' &nbsp; <span style="color:#777">'+esc(l.phone)+'</span></div>'+histHtml(l)+'</div>'+
-      '<div class="btns"><a class="btn '+timingClass(l,"call")+'" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row)+'">\uD83D\uDCDE Call</a>'+
-      '<a class="btn text" href="'+esc(sms)+'" data-act="text" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row)+'">\uD83D\uDCAC Text</a>'+
+      histHtml(l)+'</div>'+
+      '<div class="btns">'+
+      '<a class="btn text" style="grid-column:1 / span 2" href="'+esc(sms)+'" data-act="text" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row)+'">\uD83D\uDCAC Text</a>'+
       '<a class="btn upd" href="'+esc(upd)+'" target="_blank" rel="noopener">\u270F\uFE0F Update status in Sheet</a>'+
       (l.removed? '<button class="btn rst" data-restore="'+esc(l.id)+'">\u21A9 Restore to call list</button>' : (l.visited==="Yes"? '<button class="btn rmv" style="background:#1E6B2E;color:#fff;border-color:#1E6B2E" data-remove="'+esc(l.id)+'" data-reason="Visited (job order match)">\u2705 Confirm visit &amp; remove</button>' : '<button class="btn rmv" data-remove="'+esc(l.id)+'">\uD83D\uDDD1 Remove from list</button>'))+'</div></div>';
   }).join("") : (current==="REMOVED"? '<div class="empty">No removed leads.</div>' : '<div class="empty">No leads to call in this group \uD83C\uDF89</div>');
@@ -627,7 +650,7 @@ document.getElementById("exit").onclick=function(){
 };
 document.getElementById("reopen").onclick=function(){ document.getElementById("bye").style.display="none"; render(); window.scrollTo(0,0); load(true); };
 if ("scrollRestoration" in history) history.scrollRestoration="manual";
-if ("serviceWorker" in navigator) { window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js?v=13",{scope:"./"}).catch(function(){}); }); }
+if ("serviceWorker" in navigator) { window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js?v=14",{scope:"./"}).catch(function(){}); }); }
 renderTools();
 load();
 </script>
