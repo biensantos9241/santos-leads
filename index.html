@@ -96,8 +96,9 @@ details.hist ol{margin:4px 0 0 18px;padding:0;line-height:1.5}
 #callnow{display:none;margin:10px 12px 0;padding:12px;border-radius:12px;background:#1565C0;color:#fff;font-size:15px;line-height:1.4}
 #callnow b.ttl{display:block;font-size:17px;margin-bottom:6px;letter-spacing:normal;-webkit-text-stroke:0;text-shadow:none}
 /* v14: stacked lead cards — prevent flex overflow / stretched names */
-#callnow .cn,.leadrow{display:flex;align-items:flex-start;gap:10px;min-width:0}
-#callnow .cn{background:#FFFFFF;border-radius:12px;padding:10px 10px;margin-top:8px;color:#000;text-decoration:none}
+#callnow .cn-top,.leadrow{display:flex;align-items:flex-start;gap:10px;min-width:0}
+#callnow .cn{display:flex;flex-direction:column;align-items:stretch;background:#FFFFFF;border-radius:12px;padding:10px 10px;margin-top:8px;color:#000;text-decoration:none}
+#callnow .cn-top{width:100%}
 .ldet{flex:1 1 auto;min-width:0;color:#000;letter-spacing:normal;word-spacing:normal;-webkit-text-stroke:0;text-shadow:none;transform:none;filter:none;overflow-wrap:anywhere;word-break:break-word;white-space:normal}
 .l1{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:13px;font-weight:700;line-height:1.3;letter-spacing:normal;color:#000}
 .ltime{white-space:nowrap}
@@ -132,6 +133,31 @@ details.hist ol{margin:4px 0 0 18px;padding:0;line-height:1.5}
 .st.elig{background:#D9EAD3;color:#1E6B2E}
 .st.noelig{background:#FCE8B2;color:#7A4B00}
 .st.kita{background:#FDE2E1;color:#B00}
+.l6{font-size:13px;font-weight:700;color:#000;margin-top:4px;letter-spacing:normal;line-height:1.35}
+.l6.paused{color:#0B3C5D}
+.l6.ended{color:#1E6B2E}
+#callnow .calls{color:#000;background:#F3F5F8}
+.qout{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.qout button{border:1px solid #c7cdd6;background:#fff;color:#000;border-radius:16px;padding:7px 10px;font-size:13px;font-weight:700;min-height:36px;-webkit-text-stroke:0;letter-spacing:normal}
+.qout button.qstop{border-color:#F2B8B5;color:#B3261E;background:#fff}
+.qout button.qvisit{background:#D9EAD3;color:#1E6B2E;border-color:#A5D6A7}
+#bulk{display:none;position:fixed;inset:0;z-index:40;background:var(--bg);overflow:auto;padding:calc(10px + env(safe-area-inset-top)) 14px 24px;color:#000}
+#bulk .bh{display:flex;align-items:center;gap:10px;background:#1565C0;color:#fff;border-radius:12px;padding:12px;margin-bottom:12px}
+#bulk .bh h2{margin:0;flex:1;font-size:18px}
+#bulk .bh button{background:#fff;color:#1565C0;border:0;border-radius:10px;font-weight:800;padding:8px 12px;min-height:40px}
+#bulk .box{background:#fff;border-radius:12px;padding:14px;margin:0 0 12px;color:#000;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+#bulk label{display:block;font-weight:700;margin:8px 0 4px;color:#000}
+#bulk select,#bulk textarea,#bulk input[type=text]{width:100%;font-size:16px;padding:10px;border-radius:10px;border:1px solid #c7cdd6;box-sizing:border-box;color:#000;background:#fff}
+#bulk textarea{min-height:120px;line-height:1.4}
+#bulk .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#bulk .row button,#bulk .go{flex:1;min-height:48px;border:0;border-radius:12px;font-size:16px;font-weight:800;padding:10px}
+#bulk .go{background:#1565C0;color:#fff}
+#bulk .secb{background:#fff;color:#1565C0;border:2px solid #1565C0}
+#bulk .muted{font-size:13px;color:#333;margin-top:6px}
+#bulk .count{font-weight:800;margin-top:8px;color:#000}
+#bulk .prog{font-size:16px;font-weight:800;color:#000;margin:0 0 8px}
+#bulk .who{font-size:16px;color:#000;margin:0 0 8px;line-height:1.4}
+#bulk .msgprev{background:#F3F5F8;border-radius:10px;padding:10px;color:#000;white-space:pre-wrap;font-size:14px}
 </style>
 </head>
 <body>
@@ -153,6 +179,7 @@ details.hist ol{margin:4px 0 0 18px;padding:0;line-height:1.5}
 <main id="list"></main>
 <div id="jc"></div>
 <div id="modal"></div>
+<div id="bulk" hidden></div>
 <div id="bye"><b>Logged out of Santos Leads.</b><br>Saved tab and position were cleared.<br><button id="reopen">Tap to open again</button></div>
 <div class="help">
   <b>Add to home screen:</b> Android (Chrome): &#8942; menu &rarr; <i>Add to Home screen</i>. iPhone (Safari): Share &rarr; <i>Add to Home Screen</i>.<br>
@@ -439,9 +466,10 @@ function renderTools(){
   var t=document.getElementById("tools"); if (!t) return;
   var pend=getLog().filter(function(e){return !e.synced;}).length, api=apiCfg();
   t.innerHTML=(pend? '<button class="pend" id="syncnow">\u23F3 '+pend+' call log'+(pend>1?'s':'')+' waiting to sync'+(api?' \u2013 tap to retry':' (set up sync)')+'</button>' : (api? '<button disabled>\u2705 Call log synced</button>':''))+
-    '<button id="export">\u2B07 Export call log</button><button id="setup">\u2699 Sync setup'+(api?' \u2713':'')+'</button>';
+    '<button id="export">\u2B07 Export call log</button><button id="bulkbtn">\uD83D\uDCAC '+(bulkResumeLabel()||"Bulk Text")+'</button><button id="setup">\u2699 Sync setup'+(api?' \u2713':'')+'</button>';
   var sn=document.getElementById("syncnow"); if (sn) sn.onclick=function(){ if (apiCfg()) syncQueue(); else openSetup(); };
   document.getElementById("export").onclick=exportLog;
+  document.getElementById("bulkbtn").onclick=openBulk;
   document.getElementById("setup").onclick=openSetup;
   var bar=document.getElementById("iambar"); if (bar){
     var who=iAm(), mine=showMine();
@@ -506,9 +534,9 @@ function histHtml(l){
   var h=history(l); if (!h.length) return "";
   return '<details class="hist"'+(l.removed?' open':'')+'><summary>\uD83D\uDCDC Call history ('+h.length+')</summary><ol>'+h.map(function(e){
     var oc=e.action==="remove"?"Removed from list":(e.action==="restore"?"Restored to list":e.outcome);
-    return '<li>'+esc(fmtTs(e.ms)||e.ts)+' \u00B7 '+esc(e.caller)+' \u00B7 <b>'+esc(oc)+'</b>'+(e.notes?' \u2013 '+esc(e.notes):'')+(e.uid&&!serverUids[e.uid]&&!e.synced?' \u23F3':'')+'</li>'; }).join("")+'</ol></details>';
+    return '<li>'+esc(fmtTs(e.ms)||e.ts)+' \u00B7 '+esc(e.caller)+' \u00B7 <b>'+esc(friendlyOutcome(oc))+'</b>'+(e.notes?' \u2013 '+esc(e.notes):'')+(e.uid&&!serverUids[e.uid]&&!e.synced?' \u23F3':'')+'</li>'; }).join("")+'</ol></details>';
 }
-function visitHtml(l){ if (l.visited==="Yes") return '<div class="when" style="background:#D9EAD3;color:#1E6B2E;font-weight:700">\u2705 Visited (auto-matched) \u2014 confirm &amp; remove'+(l.visitDate? '<br><span style="font-weight:400">'+esc(l.visitDate)+(l.visitBranch? ' \u00B7 '+esc(l.visitBranch):'')+(l.joAmount!==''&&l.joAmount!=null&&l.joAmount!=='0'? ' \u00B7 \u20B1'+esc(l.joAmount):'')+(l.matchBasis? ' \u00B7 '+esc(l.matchBasis):'')+'</span>':'')+'</div>';
+function visitHtml(l){ if (l.visited!=="Yes" && isVisited(l)) return '<div class="when" style="background:#D9EAD3;color:#1E6B2E;font-weight:700">\u2705 Visited clinic \u2014 follow-ups ended</div>'; if (l.visited==="Yes") return '<div class="when" style="background:#D9EAD3;color:#1E6B2E;font-weight:700">\u2705 Visited (auto-matched) \u2014 confirm &amp; remove'+(l.visitDate? '<br><span style="font-weight:400">'+esc(l.visitDate)+(l.visitBranch? ' \u00B7 '+esc(l.visitBranch):'')+(l.joAmount!==''&&l.joAmount!=null&&l.joAmount!=='0'? ' \u00B7 \u20B1'+esc(l.joAmount):'')+(l.matchBasis? ' \u00B7 '+esc(l.matchBasis):'')+'</span>':'')+'</div>';
   if (l.visited==="Needs review") return '<div class="when" style="background:#FCE8B2;color:#7A4B00;font-weight:700">\uD83D\uDD0E Possible walk-in \u2014 Doc please confirm in the Sheet (Visited = Yes or No)<br><span style="font-weight:400">'+esc(l.matchBasis||'')+'</span></div>';
   return ''; }
 
@@ -524,8 +552,26 @@ function parseSlot(slot){ var t=String(slot||"").replace(/📅/g," ").replace(/\
 function manilaDayKey(ms){ var d=new Date(ms+8*3600e3); return d.getUTCFullYear()+"-"+("0"+(d.getUTCMonth()+1)).slice(-2)+"-"+("0"+d.getUTCDate()).slice(-2); }
 function nowDayKey(){ var f=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Manila",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(manilaNowDate()), o={}; f.forEach(function(x){o[x.type]=x.value;}); return o.year+"-"+o.month+"-"+o.day; }
 function calledToday(l){ var ms=parseTs(l.lastCalled)||0; extras(l.id).filter(isCall).forEach(function(e){ if (e.ms>ms) ms=e.ms; }); return ms? manilaDayKey(ms)===nowDayKey() : false; }
-function fmtMins(mins){ if (mins>=60){ var h=Math.floor(mins/60), m=mins%60; return m? (h+" hr "+m+" min") : (h+" hr"); } return Math.abs(mins)+" min"; }
-function dueInfo(l){ if (l.removed || l.visited==="Yes") return null; var start=parseSlot(l.slot); if (!start) return null; var end=start+15*60*1000, now=manilaNowDate().getTime(), mins=Math.round((start-now)/60000); if (calledToday(l)) return {state:"called", mins:mins, start:start, label:"Called today"}; if (now < start-15*60*1000) return {state:"later", mins:mins, start:start, label:"due in "+fmtMins(mins)}; if (now <= end) return {state:(mins>0?"soon":"due"), mins:mins, start:start, label: mins>0? ("due in "+mins+" min") : "DUE NOW"}; return {state:"late", mins:mins, start:start, label:"LATE · "+fmtMins(-mins)+" ago"}; }
+function fmtMins(mins){ var a=Math.abs(mins); if (a>=1440){ var d=Math.floor(a/1440), h=Math.floor((a%1440)/60); return h? (d+" day"+(d>1?"s":"")+" "+h+" hr") : (d+" day"+(d>1?"s":"")); } if (a>=60){ var h=Math.floor(a/60), m=a%60; return m? (h+" hr "+m+" min") : (h+" hr"); } return a+" min"; }
+function latestOutcome(l){ var h=history(l); return h && h.length? h[0] : null; }
+function friendlyOutcome(o){ o=String(o||""); if (o==="No answer") return "Missed call (no answer)"; return o; }
+function isVisited(l){ if (!l) return false; if (l.visited==="Yes") return true; var last=latestOutcome(l); return !!(last && last.outcome==="Visited clinic"); }
+function isStopped(l){ if (!l || isVisited(l) || l.removed) return false; var last=latestOutcome(l); return !!(last && last.outcome==="Stop call"); }
+function manilaParts(ms){ var o={}; new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Manila",year:"numeric",month:"2-digit",day:"2-digit",weekday:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(ms)).forEach(function(p){o[p.type]=p.value;}); return {y:+o.year,m:+o.month,d:+o.day,h:+o.hour,mi:+o.minute,wd:o.weekday}; }
+function manilaMs(y,m,d,h,mi){ return Date.UTC(y,m-1,d,h-8,mi); }
+function addCalDays(y,m,d,n){ var dt=new Date(Date.UTC(y,m-1,d+n)); return {y:dt.getUTCFullYear(),m:dt.getUTCMonth()+1,d:dt.getUTCDate(),wd:dt.getUTCDay()}; }
+function isClosedDay(y,m,d,wd){ if (wd===0) return true; if (m===12&&d===25) return true; if (m===1&&(d===1||d===31)) return true; return false; }
+function clampClinic(y,m,d,h,mi){ var wd=new Date(Date.UTC(y,m-1,d)).getUTCDay(); if (h<8){ h=8; mi=0; } if (h>18||(h===18&&mi>0)){ var n=addCalDays(y,m,d,1); y=n.y;m=n.m;d=n.d;wd=n.wd;h=8;mi=0; } while (isClosedDay(y,m,d,wd)){ var n=addCalDays(y,m,d,1); y=n.y;m=n.m;d=n.d;wd=n.wd; } return manilaMs(y,m,d,h,mi); }
+function addThreeClinicDays(fromMs){ var p=manilaParts(fromMs), n=addCalDays(p.y,p.m,p.d,3); return clampClinic(n.y,n.m,n.d,p.h,p.mi); }
+function fmtFollowUp(ms){ if (!ms) return ""; var p=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Manila",weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit",hour12:true}).formatToParts(new Date(ms)), o={}; p.forEach(function(x){o[x.type]=x.value;}); var ap=(o.dayPeriod||"").replace(/\./g,"").toUpperCase(); return (o.weekday||"")+", "+(o.month||"")+" "+(o.day||"")+", "+(o.hour||"")+":"+(o.minute||"")+(ap? " "+ap:""); }
+function nextFollowUpMs(l){ if (isVisited(l) || isStopped(l) || (l&&l.removed)) return 0; var last=latestOutcome(l); if (!last) return 0; var o=last.outcome||""; if (o==="Stop call"||o==="Visited clinic"||o==="Removed from list"||o==="Restored to list"||o==="Bulk text") return 0; var ms=last.ms||parseTs(last.ts); return ms? addThreeClinicDays(ms) : 0; }
+function followUpLine(l){ if (isVisited(l) && l.visited!=="Yes") return {text:"Visited clinic \u2014 follow-ups ended", cls:"ended"}; if (isVisited(l) && l.visited==="Yes") return {text:"Visited \u2014 follow-ups ended", cls:"ended"}; if (isStopped(l)) return {text:"Follow-up paused (Stop call)", cls:"paused"}; var ms=nextFollowUpMs(l); if (!ms) return null; return {text:"Next follow-up: "+fmtFollowUp(ms), cls:""}; }
+var QUICK=[{post:"Called",label:"Called"},{post:"No answer",label:"Missed call"},{post:"Received call",label:"Received call"},{post:"Stop call",label:"Stop call",cls:"qstop"},{post:"Visited clinic",label:"Visited clinic",cls:"qvisit"}];
+function quickBtns(l){ if (!l || l.removed) return ""; return '<div class="qout">'+QUICK.map(function(q){ return '<button type="button" data-q="'+esc(q.post)+'" data-id="'+esc(l.id)+'"'+(q.cls? ' class="'+q.cls+'"':'')+'>'+esc(q.label)+'</button>'; }).join("")+'</div>'; }
+function callsLine(l){ var ci=callInfo(l); if (!ci.count) return '<div class="calls none">\uD83D\uDCDE No calls logged yet</div>'; return '<div class="calls">\uD83D\uDCDE '+ci.count+' call'+(ci.count>1?'s':'')+(ci.when? ' \u00B7 last '+esc(ci.when):'')+(ci.by? ' \u00B7 '+esc(ci.by):'')+(ci.outcome? ' \u00B7 '+esc(friendlyOutcome(ci.outcome)):'')+(ci.pending? ' <span class="pend">\u23F3 '+ci.pending+' not synced</span>':'')+'</div>'; }
+function logQuick(id, outcome){ var lead=findLead(id); if (!lead || !outcome) return; var who=iAm(); if (!who){ alert("Please choose who you are (I am) before logging a call."); return; } addEntry(lead, who, outcome, "", ""); var y=window.scrollY; render(); window.scrollTo(0,y); }
+
+function dueInfo(l){ if (!l || l.removed || isVisited(l)) return null; if (isStopped(l)) return {state:"paused", mins:0, start:0, label:"Paused", follow:false}; var follow=nextFollowUpMs(l), slot=parseSlot(l.slot), start=follow||slot; if (!start) return null; var end=start+15*60*1000, now=manilaNowDate().getTime(), mins=Math.round((start-now)/60000); if (!follow && calledToday(l)) return {state:"called", mins:mins, start:start, label:"Called today", follow:false}; if (now < start-15*60*1000) return {state:"later", mins:mins, start:start, label:"due in "+fmtMins(mins), follow:!!follow}; if (now <= end) return {state:(mins>0?"soon":"due"), mins:mins, start:start, label: mins>0? ("due in "+mins+" min") : "DUE NOW", follow:!!follow}; return {state:"late", mins:mins, start:start, label:"LATE \u00B7 "+fmtMins(-mins)+" ago", follow:!!follow}; }
 function dueActive(d){ return d && (d.state==="soon" || d.state==="due" || d.state==="late"); }
 function unlockAudio(){ try{ if (!_ac) _ac=new (window.AudioContext||window.webkitAudioContext)(); if (_ac.state==="suspended") _ac.resume(); }catch(e){} }
 function playChime(){ unlockAudio(); if (!_ac) return; var t=_ac.currentTime; [880,1174].forEach(function(freq,i){ var o=_ac.createOscillator(), g=_ac.createGain(); o.type="sine"; o.frequency.value=freq; g.gain.setValueAtTime(0.0001,t+i*0.12); g.gain.exponentialRampToValueAtTime(0.15,t+i*0.12+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+i*0.12+0.2); o.connect(g); g.connect(_ac.destination); o.start(t+i*0.12); o.stop(t+i*0.12+0.22); }); }
@@ -544,12 +590,12 @@ function timingClass(l, base){ var t=callTiming(l); return t? (base+" timing-"+t
 function legendHtml(onBlue){ return '<div class="timingleg'+(onBlue?' onblue':'')+'"><span class="tdot urgent"></span> Red urgent \u00B7 <span class="tdot late"></span> Yellow late \u00B7 <span class="tdot ahead"></span> Green ahead</div>'; }
 function branchOfChoice(l){ var chosen=String(l.branch||"").trim(), nearest=String(l.nearest||"").trim(); if (chosen) return chosen; if (nearest) return nearest+" (nearest)"; return "\u2014 itanong po"; }
 function interestOf(l){ return String(l.group||"").trim() || "\u2014 itanong po"; }
-function callTimeLabel(l){ var start=parseSlot(l.slot); if (start){ var parts=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Manila",weekday:"short",hour:"numeric",minute:"2-digit",hour12:true}).formatToParts(new Date(start)), o={}; parts.forEach(function(p){ o[p.type]=p.value; }); var ap=(o.dayPeriod||"").replace(/\./g,"").toUpperCase(); return (o.weekday||"")+" "+(o.hour||"")+":"+(o.minute||"")+(ap? " "+ap:""); } var t=String(l.docTime||l.pref||"").trim(); if (t && !/^\s*any ?time/i.test(t) && !/^\s*open slot/i.test(t)) return t; return "Open slot"; }
-function shortDueLabel(d){ if (!d) return ""; if (d.state==="late") return "LATE "+fmtMins(-d.mins); if (d.state==="due") return "DUE NOW"; if (d.state==="soon" || d.state==="later") return "in "+fmtMins(d.mins); if (d.state==="called") return "Called today"; return d.label||""; }
+function callTimeLabel(l){ var d=dueInfo(l), start=(d&&d.start)||parseSlot(l.slot); if (start){ var parts=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Manila",weekday:"short",hour:"numeric",minute:"2-digit",hour12:true}).formatToParts(new Date(start)), o={}; parts.forEach(function(p){ o[p.type]=p.value; }); var ap=(o.dayPeriod||"").replace(/\./g,"").toUpperCase(); return (o.weekday||"")+" "+(o.hour||"")+":"+(o.minute||"")+(ap? " "+ap:""); } var t=String(l.docTime||l.pref||"").trim(); if (t && !/^\s*any ?time/i.test(t) && !/^\s*open slot/i.test(t)) return t; return "Open slot"; }
+function shortDueLabel(d){ if (!d) return ""; if (d.state==="paused") return "Paused"; if (d.state==="late") return "LATE "+fmtMins(-d.mins); if (d.state==="due") return "DUE NOW"; if (d.state==="soon" || d.state==="later") return "in "+fmtMins(d.mins); if (d.state==="called") return "Called today"; return d.label||""; }
 function extraLine(l){ var bits=[]; if (String(l.age||"").trim()) bits.push("Age "+String(l.age).trim()); if (String(l.loc||"").trim()) bits.push(String(l.loc).trim()); var who=assignedCaller(l); if (who) bits.push(who); return bits.join(" \u00B7 "); }
 function tagBits(l){ var t=""; if (l.elig==="Yes") t+=' <span class="st elig">39+ FREE</span>'; else if (l.elig==="No") t+=' <span class="st noelig">under 39</span>'; if (/^y/i.test(l.kita||"")) t+=' <span class="st kita">KITA</span>'; return t; }
-function leadStack(l){ var d=dueInfo(l), pill=shortDueLabel(d), extra=extraLine(l), tags=tagBits(l); return '<div class="ldet"><div class="l1"><span class="ltime">'+esc(callTimeLabel(l))+'</span>'+(pill? ' <span class="spill '+(d&&d.state?esc(d.state):'')+'" data-duepill="'+esc(l.id)+'">'+esc(pill)+'</span>':'')+'</div><div class="l2">'+esc(l.name)+(l.priority? ' <span class="badge '+esc(l.priority)+'">'+esc(l.priority)+'</span>':'')+'</div><div class="l3">Branch: '+esc(branchOfChoice(l))+'</div><div class="l4">Interest: '+esc(interestOf(l))+tags+'</div>'+(extra? '<div class="l5">'+esc(extra)+'</div>':'')+'</div>'; }
-function paintCallNow(){ var box=document.getElementById("callnow"), leg=document.getElementById("timingleg"); if (!box) return; var items=leads.filter(function(l){ var d=dueInfo(l); return dueActive(d) && isMine(l); }); if (!items.length){ box.style.display="none"; box.innerHTML=""; if (leg){ leg.style.display="block"; leg.innerHTML=legendHtml(false); } return; } items.sort(function(a,b){ return (dueInfo(a).mins)-(dueInfo(b).mins); }); box.style.display="block"; if (leg) leg.style.display="none"; box.innerHTML='<b class="ttl">\uD83D\uDD14 Call now \u00B7 '+items.length+' lead'+(items.length>1?'s':'')+' at or near their preferred time</b>'+legendHtml(true)+items.map(function(l){ return '<div class="cn">'+leadStack(l)+(l.phone? '<a class="'+timingClass(l,"cncall")+'" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'">\uD83D\uDCDE Call</a>':'')+'</div>'; }).join(""); }
+function leadStack(l){ var d=dueInfo(l), pill=shortDueLabel(d), extra=extraLine(l), tags=tagBits(l), fu=followUpLine(l); return '<div class="ldet"><div class="l1"><span class="ltime">'+esc(callTimeLabel(l))+'</span>'+(pill? ' <span class="spill '+(d&&d.state?esc(d.state):'')+'" data-duepill="'+esc(l.id)+'">'+esc(pill)+'</span>':'')+'</div><div class="l2">'+esc(l.name)+(l.priority? ' <span class="badge '+esc(l.priority)+'">'+esc(l.priority)+'</span>':'')+'</div><div class="l3">Branch: '+esc(branchOfChoice(l))+'</div><div class="l4">Interest: '+esc(interestOf(l))+tags+'</div>'+(extra? '<div class="l5">'+esc(extra)+'</div>':'')+(fu? '<div class="l6'+(fu.cls? ' '+fu.cls:'')+'">'+esc(fu.text)+'</div>':'')+'</div>'; }
+function paintCallNow(){ var box=document.getElementById("callnow"), leg=document.getElementById("timingleg"); if (!box) return; var items=leads.filter(function(l){ var d=dueInfo(l); return dueActive(d) && isMine(l); }); if (!items.length){ box.style.display="none"; box.innerHTML=""; if (leg){ leg.style.display="block"; leg.innerHTML=legendHtml(false); } return; } items.sort(function(a,b){ return (dueInfo(a).mins)-(dueInfo(b).mins); }); box.style.display="block"; if (leg) leg.style.display="none"; box.innerHTML='<b class="ttl">\uD83D\uDD14 Call now \u00B7 '+items.length+' lead'+(items.length>1?'s':'')+' due to call</b>'+legendHtml(true)+items.map(function(l){ return '<div class="cn"><div class="cn-top">'+leadStack(l)+(l.phone? '<a class="'+timingClass(l,"cncall")+'" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row||'')+'">\uD83D\uDCDE Call</a>':'')+'</div>'+callsLine(l)+quickBtns(l)+'</div>'; }).join(""); }
 function tickDue(){ if (document.getElementById("bye") && document.getElementById("bye").style.display==="block") return; leads.forEach(function(l){ if (!isMine(l)) return; var d=dueInfo(l); if (!dueActive(d)) return; var key=l.id+"@"+d.start; if (d.mins<=0 && d.mins>=-1 && !hasFired(key+"@start")){ markFired(key+"@start"); fireNote("Call now: "+l.name, (l.ctype==="Specific time"?"Preferred call time is now":"Call slot is now")+" \u00B7 "+(l.phone||""), "slot-"+l.id); } else if (d.state==="soon" && !hasFired(key+"@soon")){ markFired(key+"@soon"); fireNote("Call in "+d.mins+" min: "+l.name, assignedCaller(l)+" \u00B7 "+(l.phone||"")+" \u00B7 open Santos Leads to call", "soon-"+l.id); } }); paintCallNow(); var pills=document.querySelectorAll("[data-duepill]"); Array.prototype.forEach.call(pills,function(el){ var l=findLead(el.getAttribute("data-duepill")); var d=l&&dueInfo(l); if (d) el.textContent=shortDueLabel(d); }); }
 function dueHtml(l){ var d=dueInfo(l); if (!dueActive(d)) return ""; return '<div class="duepill '+(d.state==="late"?"late":(d.state==="soon"?"soon":""))+'" data-duepill="'+esc(l.id)+'">\uD83D\uDD14 '+esc(d.label)+'</div>'; }
 document.addEventListener("pointerdown", unlockAudio, {passive:true});
@@ -585,7 +631,7 @@ function render(err){
     return head+'<div class="card'+(st.last&&st.last.id===l.id?' justcalled':'')+(l.removed?' removed':'')+(dueOn?(dnow.state==='late'||dnow.state==='due'?' due':' soon'):'')+'" id="lead-'+esc(l.id)+'" style="border-left-color:'+col+'"><div class="body">'+
       visitHtml(l)+(l.removed? '<div class="when"><span class="rmtag">REMOVED</span> '+esc(l.localRm==="remove"?"Removed on this phone (syncing)":l.status)+'</div>':'')+
       '<div class="leadrow">'+leadStack(l)+(l.phone? '<a class="btn '+timingClass(l,"call")+'" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row)+'">\uD83D\uDCDE Call</a>':'')+'</div>'+
-      (ci.count? '<div class="calls">\uD83D\uDCDE '+ci.count+' call'+(ci.count>1?'s':'')+(ci.when? ' \u00B7 last '+esc(ci.when):'')+(ci.by? ' \u00B7 '+esc(ci.by):'')+(ci.outcome? ' \u00B7 '+esc(ci.outcome):'')+(ci.pending? ' <span class="pend">\u23F3 '+ci.pending+' not synced</span>':'')+'</div>' : '<div class="calls none">\uD83D\uDCDE No calls logged yet</div>')+
+      quickBtns(l)+callsLine(l)+
       histHtml(l)+'</div>'+
       '<div class="btns">'+
       '<a class="btn text" style="grid-column:1 / span 2" href="'+esc(sms)+'" data-act="text" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row)+'">\uD83D\uDCAC Text</a>'+
@@ -596,9 +642,80 @@ function render(err){
   paintCallNow(); jumpToLead();
   document.getElementById("status").textContent=dataSource+" \u00B7 "+leads.filter(function(l){return !l.removed;}).length+" to call \u00B7 "+leads.filter(function(l){return l.removed;}).length+" removed \u00B7 updated "+now+" (Manila) \u00B7 quiet auto-refresh every 1 min";
 }
+
+// ---- Bulk Text (sends from Doc's phone, one SMS at a time; no server-side sending) ----
+var BKEY="santosLeads.bulk.v1";
+var BULK_FREE_MSG="kung na receive nyo po itong message namin. kung interesado ka po sa FREE READING EYEGLASS ito na po ang pakita nyo sa sales staff namin. wala pong babayaran. wait po namin kayo. salamat po - doc bien santos";
+var BULK_GROUPS=["Free reading eyeglass","Starter Progressive","Wide Progressive (Essilor)","PhotoBlue","Other Essilor product","All"];
+function getBulk(){ try { return JSON.parse(localStorage.getItem(BKEY))||{}; } catch(e){ return {}; } }
+function putBulk(s){ try { localStorage.setItem(BKEY, JSON.stringify(s)); } catch(e){} }
+function bulkResumeLabel(){ var s=getBulk(); if (!s || !s.queue || !s.queue.length) return ""; var sent=(s.sent||[]).length, n=s.queue.length; if (sent>0 && sent<n) return "Resume Bulk Text ("+sent+" of "+n+")"; return ""; }
+function phMobile(p){ var d=String(p||"").replace(/[^\d+]/g,""); if (/^\+639\d{9}$/.test(d)) return d; if (/^639\d{9}$/.test(d)) return "+"+d; if (/^09\d{9}$/.test(d)) return "+63"+d.slice(1); if (/^9\d{9}$/.test(d)) return "+63"+d; return ""; }
+var GSM_BASIC="@\u00a3$\u00a5\u00e8\u00e9\u00f9\u00ec\u00f2\u00c7\n\u00d8\u00f8\r\u00c5\u00e5\u0394_\u03a6\u0393\u039b\u03a9\u03a0\u03a8\u03a3\u0398\u039e\u00c6\u00e6\u00df\u00c9 !\"#\u00a4%&'()*+,-./0123456789:;<=>?\u00a1ABCDEFGHIJKLMNOPQRSTUVWXYZ\u00c4\u00d6\u00d1\u00dc\u00a7\u00bfabcdefghijklmnopqrstuvwxyz\u00e4\u00f6\u00f1\u00fc\u00e0";
+var GSM_EXT="\f^{}\\[~]|\u20ac";
+function isGsm7(t){ t=String(t||""); for (var i=0;i<t.length;i++){ var c=t.charAt(i); if (GSM_BASIC.indexOf(c)<0 && GSM_EXT.indexOf(c)<0) return false; } return true; }
+function smsInfo(t){ t=String(t||""); var n=t.length, gsm=isGsm7(t), single=gsm?160:70, concat=gsm?153:67; if (n===0) return {chars:0, segs:0, enc:gsm?"GSM-7":"Unicode"}; if (n<=single) return {chars:n, segs:1, enc:gsm?"GSM-7":"Unicode"}; return {chars:n, segs:Math.ceil(n/concat), enc:gsm?"GSM-7":"Unicode"}; }
+function textedWithMessage(l, msg){ var m=String(msg||"").trim(); if (!m) return false; return history(l).some(function(e){ var n=String(e.notes||""); return (e.outcome==="Bulk text" || n.indexOf("Bulk text")===0) && (n===m || n.indexOf(m)>=0 || n.indexOf(m.slice(0,80))>=0); }); }
+function bulkRecipients(opts){ opts=opts||{}; var group=opts.group||"All", branch=opts.branch||"", skip=!!opts.skipTexted, msg=opts.message||""; return (leads||[]).filter(function(l){ if (l.removed) return false; if (isStopped(l)) return false; if (!phMobile(l.phone)) return false; if (group && group!=="All" && l.group!==group) return false; if (branch && String(l.branch||"").trim()!==branch) return false; if (skip && textedWithMessage(l, msg)) return false; return true; }); }
+function smsHref(num, body){ var n=phMobile(num), b=encodeURIComponent(body||""); var ios=/iPhone|iPad|iPod/i.test(navigator.userAgent||""); return ios? ("sms:"+n+"&body="+b) : ("sms:"+n+"?body="+b); }
+function uniqueBranches(){ var s={}, out=[]; (leads||[]).forEach(function(l){ var b=String(l.branch||"").trim(); if (b && !s[b]){ s[b]=1; out.push(b); } }); out.sort(); return out; }
+function closeBulk(){ window.__bulkWaiting=false; var el=document.getElementById("bulk"); if (el){ el.style.display="none"; el.innerHTML=""; } }
+function openBulk(){ var el=document.getElementById("bulk"); if (!el) return; el.hidden=false; var s=getBulk(); if (s && s.queue && (s.sent||[]).length>0 && (s.sent||[]).length<s.queue.length && !s.waiting){ renderBulkStepper(el, s); el.style.display="block"; return; } renderBulkSetup(el, s||{}); el.style.display="block"; }
+function renderBulkSetup(el, s){
+  var group=s.group||"Free reading eyeglass", branch=s.branch||"", skip=s.skipTexted!==false, msg=(s.message!=null?s.message:BULK_FREE_MSG);
+  el.innerHTML='<div class="bh"><h2>Bulk Text</h2><button type="button" id="bulkx">Close</button></div>'+
+    '<div class="box"><label>Interest group</label><select id="bgroup">'+BULK_GROUPS.map(function(g){return '<option value="'+esc(g)+'"'+(g===group?' selected':'')+'>'+esc(g==="Free reading eyeglass"?"Free Reading Eyeglass":g)+'</option>';}).join("")+'</select>'+
+    '<label>Branch (optional)</label><select id="bbranch"><option value="">All branches</option>'+uniqueBranches().map(function(b){return '<option value="'+esc(b)+'"'+(b===branch?' selected':'')+'>'+esc(b)+'</option>';}).join("")+'</select>'+
+    '<label><input type="checkbox" id="bskip"'+(skip?' checked':'')+'> Not yet texted with this message</label>'+
+    '<label>Message</label><textarea id="bmsg">'+esc(msg)+'</textarea>'+
+    '<div class="muted" id="bchars"></div>'+
+    '<div class="count" id="bcount"></div>'+
+    '<div class="row"><button type="button" class="go" id="bstart">Start / Next</button><button type="button" class="secb" id="bcopy">Copy all numbers</button></div>'+
+    '<div class="muted">Sending is from this phone, one SMS at a time. Nothing is sent automatically from a server.</div></div>';
+  document.getElementById("bulkx").onclick=closeBulk;
+  function currentOpts(){ return {group:document.getElementById("bgroup").value, branch:document.getElementById("bbranch").value, skipTexted:document.getElementById("bskip").checked, message:document.getElementById("bmsg").value}; }
+  function refresh(){ var o=currentOpts(), info=smsInfo(o.message), rec=bulkRecipients(o); document.getElementById("bchars").textContent=info.chars+" characters \u00B7 "+info.segs+" SMS segment"+(info.segs===1?"":"s")+" ("+info.enc+")"; document.getElementById("bcount").textContent=rec.length+" recipient"+(rec.length===1?"":"s")+" (skipped: no valid PH mobile, removed, or Stop call)"; }
+  document.getElementById("bgroup").onchange=function(){ var g=this.value, ta=document.getElementById("bmsg"); if (g==="Free reading eyeglass" && (!ta.value.trim() || ta.value===BULK_FREE_MSG)) ta.value=BULK_FREE_MSG; if (g!=="Free reading eyeglass" && ta.value===BULK_FREE_MSG) ta.value=""; refresh(); };
+  document.getElementById("bbranch").onchange=refresh;
+  document.getElementById("bskip").onchange=refresh;
+  document.getElementById("bmsg").oninput=refresh;
+  document.getElementById("bstart").onclick=function(){ var o=currentOpts(), rec=bulkRecipients(o); if (!rec.length){ alert("No recipients match these filters."); return; } if (!o.message.trim()){ alert("Please type the message first."); return; } var st={group:o.group,branch:o.branch,skipTexted:o.skipTexted,message:o.message,queue:rec.map(function(l){return l.id;}),sent:[],idx:0,waiting:false}; putBulk(st); renderBulkStepper(el, st); };
+  document.getElementById("bcopy").onclick=function(){ var rec=bulkRecipients(currentOpts()), nums=rec.map(function(l){return phMobile(l.phone);}).filter(Boolean); if (!nums.length){ alert("No numbers to copy."); return; } var txt=nums.join("\\n"); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(function(){ alert("Copied "+nums.length+" numbers."); }, function(){ window.prompt("Copy these numbers:", txt); }); else window.prompt("Copy these numbers:", txt); };
+  refresh();
+}
+function nextBulkIndex(st){ var sent={}; (st.sent||[]).forEach(function(id){ sent[id]=1; }); for (var i=st.idx||0; i<(st.queue||[]).length; i++){ if (!sent[st.queue[i]]) return i; } return -1; }
+function renderBulkStepper(el, st){
+  var i=nextBulkIndex(st), n=(st.queue||[]).length, sent=(st.sent||[]).length;
+  if (i<0){ el.innerHTML='<div class="bh"><h2>Bulk Text</h2><button type="button" id="bulkx">Close</button></div><div class="box"><div class="prog">Done \u2014 '+sent+' of '+n+' sent from this phone.</div><div class="row"><button type="button" class="go" id="bnew">New bulk text</button></div></div>'; document.getElementById("bulkx").onclick=closeBulk; document.getElementById("bnew").onclick=function(){ putBulk({}); renderBulkSetup(el, {}); }; return; }
+  var lead=findLead(st.queue[i])||{};
+  el.innerHTML='<div class="bh"><h2>Bulk Text</h2><button type="button" id="bulkx">Pause</button></div>'+
+    '<div class="box"><div class="prog">'+sent+' of '+n+' sent</div>'+
+    '<div class="who"><b>'+esc(lead.name||"Lead")+'</b><br>'+esc(phMobile(lead.phone)||"no number")+'<br>Branch: '+esc(branchOfChoice(lead))+' \u00B7 Interest: '+esc(interestOf(lead))+'</div>'+
+    '<div class="msgprev">'+esc(st.message||"")+'</div>'+
+    '<div class="row"><button type="button" class="go" id="bsend">Send this SMS</button><button type="button" class="secb" id="bskip">Skip</button></div>'+
+    '<div class="muted">Opens your Messages app. When you return here, this lead is marked texted and you can send the next one.</div></div>';
+  document.getElementById("bulkx").onclick=function(){ st.waiting=false; putBulk(st); window.__bulkWaiting=false; closeBulk(); renderTools(); };
+  document.getElementById("bskip").onclick=function(){ st.idx=i+1; st.waiting=false; putBulk(st); renderBulkStepper(el, st); };
+  document.getElementById("bsend").onclick=function(){ var href=smsHref(lead.phone, st.message); st.waiting=true; st.currentId=lead.id; st.idx=i; putBulk(st); window.__bulkWaiting=true; openExternal(href); };
+}
+function finishBulkSend(){
+  var st=getBulk(); window.__bulkWaiting=false; if (!st || !st.waiting || !st.currentId) return;
+  var lead=findLead(st.currentId), who=iAm()||"Doc Bien";
+  if (lead) addEntry(lead, who, "Bulk text", "", st.message||"Bulk text");
+  st.sent=st.sent||[]; if (st.sent.indexOf(st.currentId)<0) st.sent.push(st.currentId);
+  st.waiting=false; st.idx=nextBulkIndex({queue:st.queue,sent:st.sent,idx:(st.idx||0)+1}); if (st.idx<0) st.idx=(st.queue||[]).length;
+  st.currentId=""; putBulk(st);
+  var el=document.getElementById("bulk");
+  if (el && el.style.display!=="none") renderBulkStepper(el, st);
+  else renderTools();
+  render();
+}
+
 // ---- Call / Text: hand off to the dialer without leaving the app ----
 function openExternal(url){ var a=document.createElement("a"); a.href=url; a.style.display="none"; document.body.appendChild(a); a.click(); setTimeout(function(){ a.remove(); },500); }
-document.getElementById("list").addEventListener("click",function(ev){
+document.addEventListener("click",function(ev){
+  var q=ev.target.closest && ev.target.closest("button[data-q]");
+  if (q){ ev.preventDefault(); ev.stopPropagation(); logQuick(q.getAttribute("data-id"), q.getAttribute("data-q")); return; }
   var rb=ev.target.closest && ev.target.closest("button[data-remove],button[data-restore]");
   if (rb){ if (rb.getAttribute("data-remove")) openRemove(rb.getAttribute("data-remove"), rb.getAttribute("data-reason")||undefined); else openRestore(rb.getAttribute("data-restore")); return; }
   var a=ev.target.closest && ev.target.closest("a[data-act]"); if (!a) return;
@@ -617,7 +734,7 @@ function showJustCalled(){
   document.body.classList.add("hasjc");
   var upd=EDIT_URL+"#gid="+LEADS_GID+(l.row? "&range=A"+l.row+":AM"+l.row : "");
   box.innerHTML='<b>'+(l.act==="text"?"\uD83D\uDCAC Just texted":"\uD83D\uDCDE Just called")+': '+esc(l.name)+'</b> \u2014 log the call:<br>'+callerSelect("jcwho")+
-    '<div class="chips">'+OUTCOMES.map(function(m){return '<button class="oc" data-o="'+m+'">'+m+'</button>';}).join("")+
+    '<div class="chips">'+QUICK.map(function(q){return '<button class="oc" data-o="'+esc(q.post)+'">'+esc(q.label)+'</button>';}).join("")+
     '<a href="'+esc(upd)+'" target="_blank" rel="noopener">\u270F\uFE0F Sheet</a><button class="x" data-o="">\u2715 Dismiss</button></div>';
   box.style.display="block";
   document.getElementById("jcwho").onchange=function(){ localStorage.setItem(CKEY,this.value); };
@@ -626,11 +743,10 @@ function showJustCalled(){
     if (o){ var who=document.getElementById("jcwho").value; if (!who){ alert("Please choose who called (caller)."); return; }
       localStorage.setItem(CKEY,who); if (lead) addEntry(lead,who,o,"",""); }
     setState({last:null}); var y=window.scrollY; render(); window.scrollTo(0,y); box.style.display="none"; document.body.classList.remove("hasjc");
-    if (lead && (o==="Wrong number"||o==="Reached-not interested")) openRemove(lead.id, o);
   }; });
 }
 // ---- Return from dialer / app switch: restore, never reload ----
-function onReturn(){ if (document.hidden) return; var st=getState(); if (st.tab && st.tab!==current){ current=st.tab; render(); restoreScroll(); } showJustCalled(); if (Date.now()-lastLoad>30000) load(true); }
+function onReturn(){ if (document.hidden) return; if (window.__bulkWaiting) finishBulkSend(); var st=getState(); if (st.tab && st.tab!==current){ current=st.tab; render(); restoreScroll(); } showJustCalled(); if (Date.now()-lastLoad>30000) load(true); }
 document.addEventListener("visibilitychange",function(){ if (document.hidden) saveNow(); else onReturn(); });
 window.addEventListener("pagehide",saveNow);
 window.addEventListener("pageshow",function(e){ if (e.persisted) { restoreScroll(); onReturn(); } });
@@ -646,7 +762,7 @@ document.getElementById("exit").onclick=function(){
 };
 document.getElementById("reopen").onclick=function(){ document.getElementById("bye").style.display="none"; render(); window.scrollTo(0,0); load(true); };
 if ("scrollRestoration" in history) history.scrollRestoration="manual";
-if ("serviceWorker" in navigator) { window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js?v=15",{scope:"./"}).catch(function(){}); }); }
+if ("serviceWorker" in navigator) { window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js?v=16",{scope:"./"}).catch(function(){}); }); }
 renderTools();
 load();
 </script>
