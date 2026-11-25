@@ -235,6 +235,41 @@ function fromRow(r,idx){
 function apiCfg(){ try { var a=JSON.parse(localStorage.getItem(AKEY)||"null"); return a&&a.url&&a.key? a : null; } catch(e){ return null; } }
 var serverLog=[], serverUids={}, dataSource="", liveOk=false;
 function setLog(rows){ serverLog=rows.map(function(r){ return {ts:r[0],ms:parseTs(r[0]),leadId:r[1],name:r[2],phone:r[3],caller:r[4],outcome:r[5],notes:r[6]||"",via:r[7]||"",uid:r[8]||""}; }); serverUids={}; serverLog.forEach(function(e){ if (e.uid) serverUids[e.uid]=1; }); }
+// ---- Private Sheet read for signed-in Google accounts (no public sharing, nothing stored in the repo) ----
+// Uses the Sheets "gviz" JSONP endpoint: works on a phone browser signed in to a Google account that has access
+// to the Sheet (e.g. santosoptical@gmail.com in Chrome). Not signed in / no access -> fails and falls back.
+var GVIZ_N=0;
+function gvizTab(sheet, tq){
+  return new Promise(function(res, rej){
+    var cb="__gv"+(++GVIZ_N)+"_"+Date.now(), sc=document.createElement("script"), done=false;
+    var to=setTimeout(function(){ fin(); rej(new Error("Google sign-in needed (Sheet is private)")); }, 12000);
+    function fin(){ done=true; clearTimeout(to); try{ delete window[cb]; }catch(e){ window[cb]=undefined; } sc.remove(); }
+    window[cb]=function(d){ if (done) return; fin();
+      if (!d || d.status==="error" || !d.table) return rej(new Error("Sheet: "+((d&&d.errors&&d.errors[0]&&d.errors[0].detailed_message)||"no access")));
+      var heads=d.table.cols.map(function(c){ return String(c.label||"").trim(); });
+      var rows=(d.table.rows||[]).map(function(r){ return heads.map(function(_,i){ var c=r.c&&r.c[i]; return c==null? "" : (c.f!=null? String(c.f) : (c.v==null? "" : String(c.v))); }); });
+      res({headers:heads, rows:rows.filter(function(r){ return r.join("").trim()!==""; })}); };
+    sc.onerror=function(){ if (!done){ fin(); rej(new Error("Google sign-in needed (Sheet is private)")); } };
+    sc.src="https://docs.google.com/spreadsheets/d/"+SHEET_ID+"/gviz/tq?tqx=out:json;responseHandler:"+cb+"&headers=1&sheet="+encodeURIComponent(sheet)+(tq?"&tq="+encodeURIComponent(tq):"")+"&_="+Date.now();
+    document.head.appendChild(sc);
+  });
+}
+function gvizLoad(){
+  return gvizTab("Today's Call List").then(function(act){
+    var opt=function(pr){ return pr.catch(function(){ return {headers:[],rows:[]}; }); };
+    return Promise.all([opt(gvizTab("Removed Leads")), opt(gvizTab("Call Log"))]).then(function(x){
+      var out=[];
+      [[act,false],[x[0],true]].forEach(function(k){ var idx={}; k[0].headers.forEach(function(h,i){ idx[h]=i; });
+        k[0].rows.forEach(function(r){ var l=fromRow(r,idx); l.removed=k[1]; if (l.name && l.id) out.push(l); }); });
+      leads=out; setLog(x[1].rows||[]); dataSource="Live from Sheet (Google sign-in)"; usingDemo=false; lastErr="";
+    });
+  });
+}
+// One-time sync link: https://.../santos-leads/#sync=<base64 of url|key>  (the part after # never reaches any server)
+(function(){ var m=location.hash.match(/[#&]sync=([^&]+)/); if (!m) return;
+  try { var v=atob(decodeURIComponent(m[1])).split("|"); if (/^https:\/\/script\.google(usercontent)?\.com\//.test(v[0]) && v[1]) localStorage.setItem("santosLeads.api.v1", JSON.stringify({url:v[0],key:v[1]})); } catch(e){}
+  try { history.replaceState(null,"",location.pathname+location.search); } catch(e){} })();
+var CALL_LIST_URL = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/edit#gid=1192039481";
 function load(quiet){
   if (loading) return; loading=true;
   if (!quiet || !leads.length) document.getElementById("status").textContent="Loading\u2026";
@@ -248,7 +283,7 @@ function load(quiet){
         t.rows.forEach(function(r){ var l=fromRow(r,idx); l.removed=k[1]; if (l.name) out.push(l); }); });
       leads=out; setLog(((d.log||{}).rows)||[]); dataSource="Live (web app)"; usingDemo=false; lastErr="";
     })
-  : fetch(CSV_URL+"&_="+Date.now(),{cache:"no-store"}).then(function(r){
+  : gvizLoad().catch(function(e1){ window.__gvizErr=String(e1.message||e1); return fetch(CSV_URL+"&_="+Date.now(),{cache:"no-store"}).then(function(r){
       if(!r.ok) throw new Error("HTTP "+r.status);
       return r.text();
     }).then(function(t){
@@ -257,7 +292,7 @@ function load(quiet){
       head.forEach(function(h,i){ idx[h.trim()]=i; });
       leads=rows.filter(function(r){return r.join("").trim()!=="";}).map(function(r){return fromRow(r,idx);}).filter(function(l){return l.name;});
       setLog([]); dataSource="Live from Sheet"; usingDemo=false; lastErr="";
-    });
+    }).catch(function(){ throw e1; }); });
   p.then(function(){ liveOk=true; if (!DEMO_ON) leads=leads.filter(function(l){ return !isTestLead(l); }); announceNew(detectNew(leads)); keepView(render); }).catch(function(e){
     lastErr=String(e.message||e);
     if (DEMO_ON){ leads=DEMO.map(function(r){return fromRow(r,{});}); setLog(DEMO_LOG); usingDemo=true; dataSource="Demo data (TEST)"; }
@@ -425,7 +460,7 @@ document.addEventListener("pointerdown", unlockAudio, {passive:true});
 function render(err){
   err = err || lastErr; applyLocal();
   var b=document.getElementById("banner");
-  if (!usingDemo && lastErr && !liveOk){ b.style.display="block"; b.innerHTML="<b>Live leads can\u2019t be loaded</b> ("+esc(lastErr)+"). Tap <b>\u2699 Sync setup</b> and paste the Apps Script web app URL + key (see DEPLOY.md), or ask Doc to share the Sheet. Fake TEST data is hidden in live mode (add <i>?demo=1</i> to the address to preview it)."; }
+  if (!usingDemo && lastErr && !liveOk){ b.style.display="block"; b.innerHTML="<b>Live leads can\u2019t be loaded on this phone</b> ("+esc(lastErr)+").<br><a href=\""+CALL_LIST_URL+"\" target=\"_blank\" rel=\"noopener\" style=\"display:inline-block;margin:8px 0;padding:10px 14px;border-radius:10px;background:#0B3C5D;color:#fff;font-weight:800;text-decoration:none\">\uD83D\uDCCB Open Today\u2019s Call List in Google Sheets</a><br>Fix: open this page in <b>Chrome signed in to santosoptical@gmail.com</b> (or an account the Sheet is shared with), or tap <b>\u2699 Sync setup</b> after the Apps Script web app is deployed. Fake TEST data is hidden in live mode (add <i>?demo=1</i> to the address to preview it)."; }
   else if (usingDemo){ b.style.display="block"; b.innerHTML="<b>Demo mode:</b> showing sample TEST leads because the live Sheet can\u2019t be read yet ("+esc(err)+"). The Sheet owner must set Share \u2192 General access \u2192 <i>Anyone with the link: Viewer</i> for live data, or tap <b>\u2699 Sync setup</b> once the Apps Script web app is deployed. Call logs you tap are saved on this phone and shown on the cards."; }
   else b.style.display="none";
   var tabs=document.getElementById("tabs");
