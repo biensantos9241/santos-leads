@@ -265,7 +265,8 @@ function callInfo(l){
   return info;
 }
 function history(l){
-  var h=serverLog.filter(function(e){return e.leadId===l.id;}).concat(extras(l.id));
+  var loc={}; getLog().forEach(function(e){ loc[e.uid]=e.ms; });
+  var h=serverLog.filter(function(e){return e.leadId===l.id;}).map(function(e){ return (e.uid&&loc[e.uid])? Object.assign({},e,{ms:loc[e.uid]}) : e; }).concat(extras(l.id));
   return h.sort(function(a,b){ return b.ms-a.ms; });
 }
 function applyLocal(){ // a local Remove/Restore not yet in the Sheet wins over the loaded state
