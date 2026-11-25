@@ -115,6 +115,9 @@ var LEADS_GID = "287603320";
 var CSV_URL = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/gviz/tq?tqx=out:csv&headers=1&sheet=" + encodeURIComponent("Today's Call List");
 var EDIT_URL = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/edit";
 var AUTO_REFRESH_MS = 60000;
+// LIVE MODE (Doc t68u): real leads only. Fake TEST leads/demo data appear only with ?demo=1 in the address.
+var DEMO_ON = /[?&]demo=1\b/.test(location.search);
+function isTestLead(l){ return /^\s*TEST\b/i.test(l.name||""); }
 // Call log (t54u) + never auto-remove (t55u)
 var CALLERS = ["Doc Bien","Maypajo staff","Quiapo staff","Paso de Blas staff","Symaco staff","SBP staff","Tangos staff","Central caller"];
 var OUTCOMES = ["Reached-coming","Reached-not interested","No answer","Busy","Wrong number","Callback requested"];
@@ -209,7 +212,7 @@ function fromRow(r,idx){
   return l;
 }
 function apiCfg(){ try { var a=JSON.parse(localStorage.getItem(AKEY)||"null"); return a&&a.url&&a.key? a : null; } catch(e){ return null; } }
-var serverLog=[], serverUids={}, dataSource="";
+var serverLog=[], serverUids={}, dataSource="", liveOk=false;
 function setLog(rows){ serverLog=rows.map(function(r){ return {ts:r[0],ms:parseTs(r[0]),leadId:r[1],name:r[2],phone:r[3],caller:r[4],outcome:r[5],notes:r[6]||"",via:r[7]||"",uid:r[8]||""}; }); serverUids={}; serverLog.forEach(function(e){ if (e.uid) serverUids[e.uid]=1; }); }
 function load(quiet){
   if (loading) return; loading=true;
@@ -234,8 +237,10 @@ function load(quiet){
       leads=rows.filter(function(r){return r.join("").trim()!=="";}).map(function(r){return fromRow(r,idx);}).filter(function(l){return l.name;});
       setLog([]); dataSource="Live from Sheet"; usingDemo=false; lastErr="";
     });
-  p.then(function(){ keepView(render); }).catch(function(e){
-    leads=DEMO.map(function(r){return fromRow(r,{});}); setLog(DEMO_LOG); usingDemo=true; dataSource="Demo data"; lastErr=String(e.message||e); keepView(render);
+  p.then(function(){ liveOk=true; if (!DEMO_ON) leads=leads.filter(function(l){ return !isTestLead(l); }); keepView(render); }).catch(function(e){
+    lastErr=String(e.message||e);
+    if (DEMO_ON){ leads=DEMO.map(function(r){return fromRow(r,{});}); setLog(DEMO_LOG); usingDemo=true; dataSource="Demo data (TEST)"; }
+    else if (!liveOk){ leads=[]; setLog([]); usingDemo=false; dataSource="\u26A0\uFE0F Live leads not loaded"; } keepView(render);
   }).then(function(){ loading=false; lastLoad=Date.now(); syncQueue(); });
 }
 // ---- Call log (local first, synced to the Sheet's Call Log via the web app) ----
@@ -356,7 +361,8 @@ function visitHtml(l){ if (l.visited==="Yes") return '<div class="when" style="b
 function render(err){
   err = err || lastErr; applyLocal();
   var b=document.getElementById("banner");
-  if (usingDemo){ b.style.display="block"; b.innerHTML="<b>Demo mode:</b> showing sample TEST leads because the live Sheet can\u2019t be read yet ("+esc(err)+"). The Sheet owner must set Share \u2192 General access \u2192 <i>Anyone with the link: Viewer</i> for live data, or tap <b>\u2699 Sync setup</b> once the Apps Script web app is deployed. Call logs you tap are saved on this phone and shown on the cards."; }
+  if (!usingDemo && lastErr && !liveOk){ b.style.display="block"; b.innerHTML="<b>Live leads can\u2019t be loaded</b> ("+esc(lastErr)+"). Tap <b>\u2699 Sync setup</b> and paste the Apps Script web app URL + key (see DEPLOY.md), or ask Doc to share the Sheet. Fake TEST data is hidden in live mode (add <i>?demo=1</i> to the address to preview it)."; }
+  else if (usingDemo){ b.style.display="block"; b.innerHTML="<b>Demo mode:</b> showing sample TEST leads because the live Sheet can\u2019t be read yet ("+esc(err)+"). The Sheet owner must set Share \u2192 General access \u2192 <i>Anyone with the link: Viewer</i> for live data, or tap <b>\u2699 Sync setup</b> once the Apps Script web app is deployed. Call logs you tap are saved on this phone and shown on the cards."; }
   else b.style.display="none";
   var tabs=document.getElementById("tabs");
   tabs.innerHTML=GROUPS.map(function(g){
