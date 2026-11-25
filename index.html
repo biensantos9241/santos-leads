@@ -158,7 +158,38 @@ details.hist ol{margin:4px 0 0 18px;padding:0;line-height:1.5}
 #bulk .prog{font-size:16px;font-weight:800;color:#000;margin:0 0 8px}
 #bulk .who{font-size:16px;color:#000;margin:0 0 8px;line-height:1.4}
 #bulk .msgprev{background:#F3F5F8;border-radius:10px;padding:10px;color:#000;white-space:pre-wrap;font-size:14px}
+
+/* v17: product-group home (front only). Inside a group, v16 styles stay as-is. */
+#branchbar{padding:10px 14px 8px;background:#fff}
+#branchbar label{display:block;font-weight:800;font-size:14px;margin:0 0 6px;color:#000}
+#branchbar select{width:100%;font-size:16px;font-weight:700;padding:12px 10px;border-radius:12px;border:1px solid #c7cdd6;background:#fff;color:#000;min-height:48px}
+body.home #branchbar{background:#1565C0;margin:10px 12px 0;padding:12px 12px 8px;border-radius:12px 12px 0 0}
+body.home #branchbar label{color:#fff}
+body.home #homepanel{display:block;margin:0 12px 16px;padding:8px 12px 16px;border-radius:0 0 12px 12px;background:#1565C0}
+#homepanel{display:none}
+.pg-btn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:#fff;color:#000;border:0;border-radius:14px;padding:16px 16px;margin:0 0 10px;font-size:15px;font-weight:800;letter-spacing:normal;text-align:left;min-height:56px;box-shadow:0 1px 3px rgba(0,0,0,.12);-webkit-text-stroke:0}
+.pg-btn .n{flex:0 0 auto;min-width:28px;padding:4px 10px;border-radius:14px;background:#1565C0;color:#fff;font-size:15px;font-weight:800;text-align:center}
+.pg-btn.settings .n{display:none}
+#backbar{display:none;margin:10px 12px 0;background:#1565C0;color:#fff;border-radius:12px;padding:10px 12px;align-items:center;gap:10px}
+#backbar.show{display:flex}
+#backbar button{background:#fff;color:#000;border:0;border-radius:10px;font-weight:800;padding:10px 14px;min-height:44px;font-size:15px}
+#backbar h2{margin:0;flex:1;font-size:16px;font-weight:800;color:#fff;letter-spacing:normal}
+body.home .tabs,body.home #iambar,body.home #callnow,body.home #timingleg,body.home #tools,body.home main,body.home .help,body.home #jc{display:none !important}
+body.home #status{display:none !important}
+#homestat{color:#fff;font-size:13px;font-weight:600;padding:4px 2px 0;line-height:1.4}
+body.settings #callnow,body.settings #timingleg,body.settings #iambar,body.settings #tools,body.settings .tabs,body.settings .help{display:none !important}
+body.settings #status{padding:8px 14px}
+#settingsbox{background:#fff;border-radius:14px;padding:14px;margin:10px 0;color:#000;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+#settingsbox h3{margin:0 0 8px;font-size:16px;color:#000}
+#settingsbox label{display:block;font-weight:700;margin:8px 0 4px;color:#000}
+#settingsbox select,#settingsbox button.sbtn{width:100%;font-size:16px;padding:10px;border-radius:10px;border:1px solid #c7cdd6;background:#fff;color:#000;min-height:44px;text-align:left;font-weight:700;margin:0 0 8px}
+#settingsbox button.sbtn{cursor:pointer}
+#settingsbox .srow{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+#settingsbox .srow button{flex:1;min-width:120px}
+#settingsbox .muted{font-size:13px;color:#333;margin:6px 0}
+#settingsbox .timingleg{margin:8px 0;color:#000}
 </style>
+
 </head>
 <body>
 <header>
@@ -170,6 +201,9 @@ details.hist ol{margin:4px 0 0 18px;padding:0;line-height:1.5}
   </div>
   <nav class="tabs" id="tabs"></nav>
 </header>
+<div id="branchbar"></div>
+<div id="backbar" hidden></div>
+<div id="homepanel"></div>
 <div id="banner"></div>
 <div id="iambar"></div>
 <div id="callnow"></div>
@@ -221,6 +255,152 @@ var GROUPS = [
 ];
 var GCOLOR = {}; GROUPS.forEach(function(g){ GCOLOR[g.key]=g.color; });
 
+var PRODUCT_GROUPS = [
+  {key:"WIDE", label:"ESSILOR (WIDE PROG)", interest:"Wide Progressive (Essilor)"},
+  {key:"STARTER", label:"STARTER PROGRESSIVE", interest:"Starter Progressive"},
+  {key:"PHOTO", label:"PHOTOBLUE (BUY1 TAKE 3)", interest:"PhotoBlue"},
+  {key:"BUY2", label:"BUY 2 TAKE 1", interest:"Buy 2 Take 1"},
+  {key:"FREE", label:"FREE READING EYEGLASS", interest:"Free reading eyeglass"}
+];
+var OTHER_GROUP = {key:"OTHER", label:"OTHER", interest:"Other Essilor product"};
+var VIEW_TABS = [
+  {key:"HOT", label:"\uD83D\uDD25 All HOT", color:"#CC0000", test:function(l){return l.priority==="HOT";}},
+  {key:"ALL", label:"All", color:"#0B3C5D", test:function(){return true;}},
+  {key:"REMOVED", label:"\uD83D\uDDD1 Removed", color:"#5f6368", test:function(l){return l.removed;}}
+];
+var BRKEY="santosLeads.branch.v1";
+var SHEETKEY="santosLeads.sheet.v1";
+var BRANCHES=[{id:"",label:"All branches"},{id:"Maypajo",label:"Maypajo"},{id:"Paso de Blas",label:"Paso de Blas"},{id:"Quiapo",label:"Quiapo"},{id:"SBP",label:"SBP / San Bartolome"},{id:"Symaco",label:"Symaco"},{id:"Tangos",label:"Tangos"}];
+var openGroup="";
+function selectedBranch(){ try{ return localStorage.getItem(BRKEY)||""; }catch(e){ return ""; } }
+function setBranch(v){ try{ localStorage.setItem(BRKEY, v||""); }catch(e){} }
+function branchNorm(s){
+  s=String(s||"").toLowerCase().replace(/\s+/g," ").trim();
+  if (!s) return "";
+  if (/\bsbp\b|san bartolome/.test(s)) return "SBP";
+  if (/paso de blas/.test(s)) return "Paso de Blas";
+  if (/maypajo/.test(s)) return "Maypajo";
+  if (/quiapo/.test(s)) return "Quiapo";
+  if (/symaco/.test(s)) return "Symaco";
+  if (/tangos/.test(s)) return "Tangos";
+  return s;
+}
+function passBranch(l){
+  var want=selectedBranch();
+  if (!want) return true;
+  var use=branchNorm(l.branch)||branchNorm(l.nearest);
+  return use===want;
+}
+function productGroupOf(l){
+  var s=String((l&&l.group)||"").toLowerCase().replace(/\s+/g," ").trim();
+  var blob=s+" "+String((l&&l.summary)||"").toLowerCase();
+  if (/buy\s*2\s*(take|get)\s*1|buy2take1|\bb2t1\b/.test(s)) return "BUY2";
+  if (/photo\s*blue|photoblue|buy\s*1\s*take\s*3|buy1take3|\bb1t3\b/.test(s)) return "PHOTO";
+  if (/starter\s*prog/.test(s) || s==="starter progressive") return "STARTER";
+  if (/wide\s*prog|essilor\s*\(?\s*wide/.test(s)) return "WIDE";
+  if (/free\s*reading|reading\s*eyeglass/.test(s)) return "FREE";
+  if (/buy\s*2\s*(take|get)\s*1|buy2take1|\bb2t1\b/.test(blob)) return "BUY2";
+  if (/other\s*essilor|essilor/.test(s)) return "OTHER";
+  if (s) return "OTHER";
+  return "OTHER";
+}
+function productLabel(key){
+  if (key==="SETTINGS") return "SETTINGS";
+  if (key==="OTHER") return OTHER_GROUP.label;
+  for (var i=0;i<PRODUCT_GROUPS.length;i++) if (PRODUCT_GROUPS[i].key===key) return PRODUCT_GROUPS[i].label;
+  return key||"";
+}
+function productInterest(key){
+  if (key==="OTHER") return OTHER_GROUP.interest;
+  for (var i=0;i<PRODUCT_GROUPS.length;i++) if (PRODUCT_GROUPS[i].key===key) return PRODUCT_GROUPS[i].interest;
+  return "";
+}
+function otherNeeded(){ return (leads||[]).some(function(l){ return productGroupOf(l)==="OTHER"; }); }
+function homeGroups(){ return PRODUCT_GROUPS.concat(otherNeeded()? [OTHER_GROUP] : []); }
+function isNeedToCall(l){ return !!(l && !l.removed && !isVisited(l) && !isStopped(l)); }
+function needToCallCount(key){ return (leads||[]).filter(function(l){ return productGroupOf(l)===key && passBranch(l) && isNeedToCall(l); }).length; }
+function passProduct(l){ return !openGroup || openGroup==="SETTINGS" || productGroupOf(l)===openGroup; }
+function slimLead(l){
+  var o={}, keys=["id","priority","name","phone","group","branch","deadline","status","pref","row","loc","nearest","docTime","kita","age","elig","summary","score","slot","ctype","msg","callCount","lastCalled","lastBy","lastOutcome","removed","visited","visitDate","visitBranch","joAmount","matchBasis"];
+  keys.forEach(function(k){ o[k]=l[k]; });
+  return o;
+}
+function saveSheetCache(){
+  if (usingDemo || !leads || !leads.length) return;
+  try{
+    var logRows=(serverLog||[]).map(function(e){ return [e.ts,e.leadId,e.name,e.phone,e.caller,e.outcome,e.notes||"",e.via||"",e.uid||""]; });
+    localStorage.setItem(SHEETKEY, JSON.stringify({saved:Date.now(), source:dataSource, leads:leads.map(slimLead), log:logRows}));
+  }catch(e){ window.__cacheErr=String(e.message||e); }
+}
+function loadSheetCache(){
+  try{
+    var d=JSON.parse(localStorage.getItem(SHEETKEY)||"null");
+    if (!d || !d.leads || !d.leads.length) return false;
+    leads=d.leads;
+    if (d.log) setLog(d.log);
+    var when=d.saved? new Date(d.saved).toLocaleString("en-PH",{timeZone:"Asia/Manila",hour:"numeric",minute:"2-digit",month:"short",day:"numeric"}):"";
+    dataSource="Saved on this phone"+(when? " · "+when:"");
+    usingDemo=false; liveOk=true; lastErr="";
+    return true;
+  }catch(e){ return false; }
+}
+function renderBranchBar(){
+  var el=document.getElementById("branchbar"); if (!el) return;
+  var cur=selectedBranch();
+  el.innerHTML='<label for="branchsel">Branch</label><select id="branchsel" aria-label="Select branch">'+BRANCHES.map(function(b){ return '<option value="'+esc(b.id)+'"'+(b.id===cur?' selected':'')+'>'+esc(b.label)+'</option>'; }).join("")+'</select>';
+  document.getElementById("branchsel").onchange=function(){ setBranch(this.value); render(); renderTools(); };
+}
+function goHome(){ saveNow(); openGroup=""; setState({product:""}); current="HOT"; render(); window.scrollTo(0,0); }
+function openProduct(key){ saveNow(); openGroup=key||""; setState({product:openGroup}); if (current!=="HOT" && current!=="ALL" && current!=="REMOVED") current="HOT"; setState({tab:current}); render(); window.scrollTo(0,0); }
+function renderBackBar(title){
+  var el=document.getElementById("backbar"); if (!el) return;
+  el.hidden=false; el.classList.add("show");
+  el.innerHTML='<button type="button" id="gback">\u2190 Back</button><h2>'+esc(title)+'</h2>';
+  document.getElementById("gback").onclick=goHome;
+}
+function hideBackBar(){ var el=document.getElementById("backbar"); if (!el) return; el.hidden=true; el.classList.remove("show"); el.innerHTML=""; }
+function renderHome(){
+  var el=document.getElementById("homepanel"); if (!el) return;
+  hideBackBar();
+  var html=homeGroups().map(function(g){ return '<button type="button" class="pg-btn" data-pg="'+esc(g.key)+'"><span>'+esc(g.label)+'</span><span class="n">'+needToCallCount(g.key)+'</span></button>'; }).join("");
+  html+='<button type="button" class="pg-btn settings" data-pg="SETTINGS"><span>SETTINGS</span></button>';
+  html+='<div id="homestat"></div>';
+  el.innerHTML=html;
+  Array.prototype.forEach.call(el.querySelectorAll("[data-pg]"), function(btn){ btn.onclick=function(){ openProduct(btn.getAttribute("data-pg")); }; });
+  var box=document.getElementById("callnow"); if (box){ box.style.display="none"; box.innerHTML=""; }
+  var leg=document.getElementById("timingleg"); if (leg){ leg.style.display="none"; leg.innerHTML=""; }
+  var list=document.getElementById("list"); if (list) list.innerHTML="";
+}
+function renderSettings(){
+  renderBackBar("SETTINGS");
+  var el=document.getElementById("homepanel"); if (el) el.innerHTML="";
+  var box=document.getElementById("callnow"); if (box){ box.style.display="none"; box.innerHTML=""; }
+  var leg=document.getElementById("timingleg"); if (leg){ leg.style.display="none"; }
+  var who=iAm(), mine=showMine(), api=apiCfg(), pend=getLog().filter(function(e){return !e.synced;}).length;
+  var nActive=leads.filter(function(l){return !l.removed;}).length, nRm=leads.filter(function(l){return l.removed;}).length;
+  var list=document.getElementById("list");
+  list.innerHTML='<div id="settingsbox"><h3>Caller</h3>'+
+    '<label>I am</label><select id="iamwho"><option value="">\u2014 Choose who you are \u2014</option>'+CALLERS.map(function(x){return '<option'+(x===who?' selected':'')+' value="'+esc(x)+'">'+esc(x)+'</option>';}).join("")+'</select>'+
+    '<div class="srow"><button type="button" class="sbtn" id="showmine">'+esc(mine?"My assigned leads":"All leads")+'</button>'+
+    (typeof Notification!=="undefined" && Notification.permission==="default"? '<button type="button" class="sbtn" id="enablenote">Enable call alerts</button>': (canNotify()? '<span class="muted">Alerts on</span>':''))+'</div>'+
+    legendHtml(false)+
+    '<h3 style="margin-top:14px">Sync</h3>'+
+    '<div class="muted">'+(api? (pend? pend+' call log'+(pend>1?'s':'')+' waiting to sync' : 'Call log synced')+' \u00b7 leads auto-save on this phone after each refresh' : 'Sync is not set up on this phone yet')+'</div>'+
+    '<div class="muted">Loaded: '+nActive+' active \u00b7 '+nRm+' removed'+(dataSource? ' \u00b7 '+esc(dataSource):'')+'</div>'+
+    '<div class="srow">'+(pend? '<button type="button" class="sbtn" id="syncnow">Retry sync</button>':'')+
+    '<button type="button" class="sbtn" id="setup">\u2699 Sync setup'+(api?' \u2713':'')+'</button>'+
+    '<button type="button" class="sbtn" id="export">\u2B07 Export call log</button></div>'+
+    '<div class="muted">Leads from the private Sheet auto-load every minute and are saved on this phone. No manual import.</div>'+
+    '<div class="help" style="margin:12px 0 0">'+document.querySelector(".help").innerHTML+'</div></div>';
+  document.getElementById("iamwho").onchange=function(){ localStorage.setItem(CKEY,this.value); if (this.value) askNotifyOnce(); render(); };
+  document.getElementById("showmine").onclick=function(){ try{ localStorage.setItem(FILTERKEY, mine?"all":"mine"); }catch(e){} render(); };
+  var en=document.getElementById("enablenote"); if (en) en.onclick=function(){ unlockAudio(); askNotifyOnce(); };
+  var sn=document.getElementById("syncnow"); if (sn) sn.onclick=function(){ if (apiCfg()) syncQueue(); else openSetup(); };
+  document.getElementById("setup").onclick=openSetup;
+  document.getElementById("export").onclick=exportLog;
+}
+
+
 // Demo rows (fake TEST leads) used only when the live Sheet can't be read.
 var DEMO = [
  ["L012", "HOT", "TEST Ricardo Manalo", "+639170000012", "Wide Progressive (Essilor)", "Quiapo", "Tue, Dec 1, 2026", "New", "Late morning 10 AM–12 NN", "13", "Sta. Cruz, Manila", "Quiapo", "Late morning 10 AM–12 NN", "Yes", "50", "Yes", "TEST. Wide Progressive (Essilor) + FREE reading eyeglass (50, eligible); Sta. Cruz, Manila -> Quiapo. Planned visit: Fri, Nov 27, 2026. Doc call: Late morning 10 AM–12 NN. Source: Messenger. Asked if Wide Progressive helps for computer + reading.", "95", "📅 Thu Nov 26, 10:00 AM", "Specific time", "0", "", "", "", ""],
@@ -259,11 +439,17 @@ var leads = [], current = "HOT", usingDemo = false, lastErr = "", lastLoad = 0, 
 var SKEY = "santosLeads.state.v1";
 function getState(){ try { return JSON.parse(localStorage.getItem(SKEY)) || {}; } catch(e){ return {}; } }
 function setState(p){ var st=getState(); for (var k in p) st[k]=p[k]; try { localStorage.setItem(SKEY, JSON.stringify(st)); } catch(e){} return st; }
-(function(){ var st=getState(); if (st.tab && GROUPS.some(function(g){return g.key===st.tab;})) current=st.tab; })();
+(function(){ var st=getState(); var pgmap={"Wide Progressive (Essilor)":"WIDE","Starter Progressive":"STARTER","PhotoBlue":"PHOTO","Free reading eyeglass":"FREE","Other Essilor product":"OTHER"};
+  if (st.product==="SETTINGS" || st.product==="OTHER" || PRODUCT_GROUPS.some(function(g){return g.key===st.product;})) openGroup=st.product;
+  else if (st.tab && pgmap[st.tab]) openGroup=pgmap[st.tab];
+  if (st.tab==="HOT" || st.tab==="ALL" || st.tab==="REMOVED") current=st.tab;
+  else if (pgmap[st.tab]) current="HOT";
+  else if (st.tab && GROUPS.some(function(g){return g.key===st.tab;})) current=st.tab;
+})();
 var scrollTimer=null;
 window.addEventListener("scroll",function(){ clearTimeout(scrollTimer); scrollTimer=setTimeout(function(){ if (document.getElementById("bye").style.display==="block") return; var o={}; o["scroll_"+current]=window.scrollY; setState(o); },150); },{passive:true});
-function saveNow(){ var o={tab:current}; o["scroll_"+current]=window.scrollY; setState(o); }
-function restoreScroll(){ var y=getState()["scroll_"+current]; if (typeof y==="number") window.scrollTo(0,y); }
+function saveNow(){ var o={tab:current, product:openGroup||""}; o["scroll_"+(openGroup||"home")+"_"+current]=window.scrollY; setState(o); }
+function restoreScroll(){ var y=getState()["scroll_"+(openGroup||"home")+"_"+current]; if (typeof y==="number") window.scrollTo(0,y); }
 
 function parseCSV(text){
   var rows=[],row=[],f="",q=false;
@@ -406,10 +592,12 @@ function load(quiet){
       leads=rows.filter(function(r){return r.join("").trim()!=="";}).map(function(r){return fromRow(r,idx);}).filter(function(l){return l.name;});
       setLog([]); dataSource="Live from Sheet"; usingDemo=false; lastErr="";
     }).catch(function(){ throw e1; }); });
-  p.then(function(){ liveOk=true; if (!DEMO_ON) leads=leads.filter(function(l){ return !isTestLead(l); }); announceNew(detectNew(leads)); keepView(render); }).catch(function(e){
+  p.then(function(){ liveOk=true; if (!DEMO_ON) leads=leads.filter(function(l){ return !isTestLead(l); }); announceNew(detectNew(leads)); saveSheetCache(); keepView(render); }).catch(function(e){
     lastErr=String(e.message||e);
-    if (DEMO_ON){ leads=DEMO.map(function(r){return fromRow(r,{});}); setLog(DEMO_LOG); usingDemo=true; dataSource="Demo data (TEST)"; }
-    else if (!liveOk){ leads=[]; setLog([]); usingDemo=false; dataSource="\u26A0\uFE0F Live leads not loaded"; } if (leads.length) announceNew(detectNew(leads)); keepView(render);
+    if (leads.length && !usingDemo){ keepView(render); }
+    else if (DEMO_ON){ leads=DEMO.map(function(r){return fromRow(r,{});}); setLog(DEMO_LOG); usingDemo=true; dataSource="Demo data (TEST)"; if (leads.length) announceNew(detectNew(leads)); keepView(render); }
+    else if (!liveOk){ leads=[]; setLog([]); usingDemo=false; dataSource="\u26A0\uFE0F Live leads not loaded"; keepView(render); }
+    else { if (leads.length) announceNew(detectNew(leads)); keepView(render); }
   }).then(function(){ loading=false; lastLoad=Date.now(); syncQueue(); });
 }
 // ---- Call log (local first, synced to the Sheet's Call Log via the web app) ----
@@ -469,7 +657,7 @@ function renderTools(){
     '<button id="export">\u2B07 Export call log</button><button id="bulkbtn">\uD83D\uDCAC '+(bulkResumeLabel()||"Bulk Text")+'</button><button id="setup">\u2699 Sync setup'+(api?' \u2713':'')+'</button>';
   var sn=document.getElementById("syncnow"); if (sn) sn.onclick=function(){ if (apiCfg()) syncQueue(); else openSetup(); };
   document.getElementById("export").onclick=exportLog;
-  document.getElementById("bulkbtn").onclick=openBulk;
+  document.getElementById("bulkbtn").onclick=function(){ var preset={}; if (openGroup && openGroup!=="SETTINGS"){ preset.group=productInterest(openGroup); var br=selectedBranch(); if (br) preset.branch=br; } openBulk(preset); };
   document.getElementById("setup").onclick=openSetup;
   var bar=document.getElementById("iambar"); if (bar){
     var who=iAm(), mine=showMine();
@@ -595,23 +783,42 @@ function shortDueLabel(d){ if (!d) return ""; if (d.state==="paused") return "Pa
 function extraLine(l){ var bits=[]; if (String(l.age||"").trim()) bits.push("Age "+String(l.age).trim()); if (String(l.loc||"").trim()) bits.push(String(l.loc).trim()); var who=assignedCaller(l); if (who) bits.push(who); return bits.join(" \u00B7 "); }
 function tagBits(l){ var t=""; if (l.elig==="Yes") t+=' <span class="st elig">39+ FREE</span>'; else if (l.elig==="No") t+=' <span class="st noelig">under 39</span>'; if (/^y/i.test(l.kita||"")) t+=' <span class="st kita">KITA</span>'; return t; }
 function leadStack(l){ var d=dueInfo(l), pill=shortDueLabel(d), extra=extraLine(l), tags=tagBits(l), fu=followUpLine(l); return '<div class="ldet"><div class="l1"><span class="ltime">'+esc(callTimeLabel(l))+'</span>'+(pill? ' <span class="spill '+(d&&d.state?esc(d.state):'')+'" data-duepill="'+esc(l.id)+'">'+esc(pill)+'</span>':'')+'</div><div class="l2">'+esc(l.name)+(l.priority? ' <span class="badge '+esc(l.priority)+'">'+esc(l.priority)+'</span>':'')+'</div><div class="l3">Branch: '+esc(branchOfChoice(l))+'</div><div class="l4">Interest: '+esc(interestOf(l))+tags+'</div>'+(extra? '<div class="l5">'+esc(extra)+'</div>':'')+(fu? '<div class="l6'+(fu.cls? ' '+fu.cls:'')+'">'+esc(fu.text)+'</div>':'')+'</div>'; }
-function paintCallNow(){ var box=document.getElementById("callnow"), leg=document.getElementById("timingleg"); if (!box) return; var items=leads.filter(function(l){ var d=dueInfo(l); return dueActive(d) && isMine(l); }); if (!items.length){ box.style.display="none"; box.innerHTML=""; if (leg){ leg.style.display="block"; leg.innerHTML=legendHtml(false); } return; } items.sort(function(a,b){ return (dueInfo(a).mins)-(dueInfo(b).mins); }); box.style.display="block"; if (leg) leg.style.display="none"; box.innerHTML='<b class="ttl">\uD83D\uDD14 Call now \u00B7 '+items.length+' lead'+(items.length>1?'s':'')+' due to call</b>'+legendHtml(true)+items.map(function(l){ return '<div class="cn"><div class="cn-top">'+leadStack(l)+(l.phone? '<a class="'+timingClass(l,"cncall")+'" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row||'')+'">\uD83D\uDCDE Call</a>':'')+'</div>'+callsLine(l)+quickBtns(l)+'</div>'; }).join(""); }
+function paintCallNow(){ var box=document.getElementById("callnow"), leg=document.getElementById("timingleg"); if (!box) return; if (!openGroup || openGroup==="SETTINGS"){ box.style.display="none"; box.innerHTML=""; if (leg){ leg.style.display="none"; leg.innerHTML=""; } return; } var items=leads.filter(function(l){ var d=dueInfo(l); return dueActive(d) && isMine(l) && passBranch(l) && passProduct(l); }); if (!items.length){ box.style.display="none"; box.innerHTML=""; if (leg){ leg.style.display="block"; leg.innerHTML=legendHtml(false); } return; } items.sort(function(a,b){ return (dueInfo(a).mins)-(dueInfo(b).mins); }); box.style.display="block"; if (leg) leg.style.display="none"; box.innerHTML='<b class="ttl">\uD83D\uDD14 Call now \u00B7 '+items.length+' lead'+(items.length>1?'s':'')+' due to call</b>'+legendHtml(true)+items.map(function(l){ return '<div class="cn"><div class="cn-top">'+leadStack(l)+(l.phone? '<a class="'+timingClass(l,"cncall")+'" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row||'')+'">\uD83D\uDCDE Call</a>':'')+'</div>'+callsLine(l)+quickBtns(l)+'</div>'; }).join(""); }
 function tickDue(){ if (document.getElementById("bye") && document.getElementById("bye").style.display==="block") return; leads.forEach(function(l){ if (!isMine(l)) return; var d=dueInfo(l); if (!dueActive(d)) return; var key=l.id+"@"+d.start; if (d.mins<=0 && d.mins>=-1 && !hasFired(key+"@start")){ markFired(key+"@start"); fireNote("Call now: "+l.name, (l.ctype==="Specific time"?"Preferred call time is now":"Call slot is now")+" \u00B7 "+(l.phone||""), "slot-"+l.id); } else if (d.state==="soon" && !hasFired(key+"@soon")){ markFired(key+"@soon"); fireNote("Call in "+d.mins+" min: "+l.name, assignedCaller(l)+" \u00B7 "+(l.phone||"")+" \u00B7 open Santos Leads to call", "soon-"+l.id); } }); paintCallNow(); var pills=document.querySelectorAll("[data-duepill]"); Array.prototype.forEach.call(pills,function(el){ var l=findLead(el.getAttribute("data-duepill")); var d=l&&dueInfo(l); if (d) el.textContent=shortDueLabel(d); }); }
 function dueHtml(l){ var d=dueInfo(l); if (!dueActive(d)) return ""; return '<div class="duepill '+(d.state==="late"?"late":(d.state==="soon"?"soon":""))+'" data-duepill="'+esc(l.id)+'">\uD83D\uDD14 '+esc(d.label)+'</div>'; }
 document.addEventListener("pointerdown", unlockAudio, {passive:true});
 function render(err){
   err = err || lastErr; applyLocal();
+  document.body.classList.remove("home","ingroup","settings");
+  renderBranchBar();
+  var mode = !openGroup? "home" : (openGroup==="SETTINGS"? "settings" : "group");
+  document.body.classList.add(mode==="home"?"home":(mode==="settings"?"settings":"ingroup"));
   var b=document.getElementById("banner");
   if (!usingDemo && lastErr && !liveOk){ b.style.display="block"; b.innerHTML=startCard(lastErr); var bs=document.getElementById("bsetup"); if (bs) bs.onclick=openSetup; var br=document.getElementById("bretry"); if (br) br.onclick=function(){ load(); }; }
   else if (usingDemo){ b.style.display="block"; b.innerHTML="<b>Demo mode:</b> showing sample TEST leads because the live Sheet can\u2019t be read yet ("+esc(err)+"). The Sheet owner must set Share \u2192 General access \u2192 <i>Anyone with the link: Viewer</i> for live data, or tap <b>\u2699 Sync setup</b> once the Apps Script web app is deployed. Call logs you tap are saved on this phone and shown on the cards."; }
   else b.style.display="none";
+  var now=new Date().toLocaleTimeString("en-PH",{timeZone:"Asia/Manila",hour:"numeric",minute:"2-digit"});
+  if (mode==="home"){
+    renderHome();
+    var hs=document.getElementById("homestat"); if (hs) hs.textContent=dataSource+" \u00b7 updated "+now+" (Manila) \u00b7 auto-refresh every 1 min";
+    renderTools();
+    return;
+  }
+  if (mode==="settings"){
+    hideBackBar();
+    renderSettings();
+    document.getElementById("status").textContent=dataSource+" \u00b7 updated "+now+" (Manila) \u00b7 auto-refresh every 1 min";
+    return;
+  }
+  renderBackBar(productLabel(openGroup));
+  var hp=document.getElementById("homepanel"); if (hp) hp.innerHTML="";
   var tabs=document.getElementById("tabs");
-  tabs.innerHTML=GROUPS.map(function(g){
-    var n=leads.filter(function(l){return inTab(l,g.key)&&isMine(l);}).length;
+  tabs.innerHTML=VIEW_TABS.map(function(g){
+    var n=leads.filter(function(l){return inTab(l,g.key)&&isMine(l)&&passBranch(l)&&passProduct(l);}).length;
     return '<button class="tab'+(g.key===current?' on':'')+'" data-k="'+esc(g.key)+'">'+esc(g.label)+'<span class="n">'+n+'</span></button>';
   }).join("");
   Array.prototype.forEach.call(tabs.querySelectorAll(".tab"),function(el){ el.onclick=function(){ saveNow(); current=el.getAttribute("data-k"); setState({tab:current}); render(); restoreScroll(); if (window.scrollY===0) window.scrollTo(0,0); showJustCalled(); }; });
-  var list=leads.map(function(l,i){l._i=i;return l;}).filter(function(l){return inTab(l,current)&&isMine(l);});
+  var list=leads.map(function(l,i){l._i=i;return l;}).filter(function(l){return inTab(l,current)&&isMine(l)&&passBranch(l)&&passProduct(l);});
   list.forEach(function(l){ l._ci=callInfo(l); l._score=Math.max(0,l.score-15*l._ci.missedLocal); });
   function vrank(l){ return l.visited==="Yes"?2:(l.visited==="Needs review"?1:0); }
   function drank(l){ var d=dueInfo(l); return dueActive(d)?0:1; }
@@ -638,15 +845,14 @@ function render(err){
       '<a class="btn upd" href="'+esc(upd)+'" target="_blank" rel="noopener">\u270F\uFE0F Update status in Sheet</a>'+
       (l.removed? '<button class="btn rst" data-restore="'+esc(l.id)+'">\u21A9 Restore to call list</button>' : (l.visited==="Yes"? '<button class="btn rmv" style="background:#1E6B2E;color:#fff;border-color:#1E6B2E" data-remove="'+esc(l.id)+'" data-reason="Visited (job order match)">\u2705 Confirm visit &amp; remove</button>' : '<button class="btn rmv" data-remove="'+esc(l.id)+'">\uD83D\uDDD1 Remove from list</button>'))+'</div></div>';
   }).join("") : (current==="REMOVED"? '<div class="empty">No removed leads.</div>' : '<div class="empty">No leads to call in this group \uD83C\uDF89</div>');
-  var now=new Date().toLocaleTimeString("en-PH",{timeZone:"Asia/Manila",hour:"numeric",minute:"2-digit"});
-  paintCallNow(); jumpToLead();
+  paintCallNow(); jumpToLead(); renderTools();
   document.getElementById("status").textContent=dataSource+" \u00B7 "+leads.filter(function(l){return !l.removed;}).length+" to call \u00B7 "+leads.filter(function(l){return l.removed;}).length+" removed \u00B7 updated "+now+" (Manila) \u00B7 quiet auto-refresh every 1 min";
 }
 
 // ---- Bulk Text (sends from Doc's phone, one SMS at a time; no server-side sending) ----
 var BKEY="santosLeads.bulk.v1";
 var BULK_FREE_MSG="kung na receive nyo po itong message namin. kung interesado ka po sa FREE READING EYEGLASS ito na po ang pakita nyo sa sales staff namin. wala pong babayaran. wait po namin kayo. salamat po - doc bien santos";
-var BULK_GROUPS=["Free reading eyeglass","Starter Progressive","Wide Progressive (Essilor)","PhotoBlue","Other Essilor product","All"];
+var BULK_GROUPS=["Free reading eyeglass","Starter Progressive","Wide Progressive (Essilor)","PhotoBlue","Buy 2 Take 1","Other Essilor product","All"];
 function getBulk(){ try { return JSON.parse(localStorage.getItem(BKEY))||{}; } catch(e){ return {}; } }
 function putBulk(s){ try { localStorage.setItem(BKEY, JSON.stringify(s)); } catch(e){} }
 function bulkResumeLabel(){ var s=getBulk(); if (!s || !s.queue || !s.queue.length) return ""; var sent=(s.sent||[]).length, n=s.queue.length; if (sent>0 && sent<n) return "Resume Bulk Text ("+sent+" of "+n+")"; return ""; }
@@ -656,11 +862,11 @@ var GSM_EXT="\f^{}\\[~]|\u20ac";
 function isGsm7(t){ t=String(t||""); for (var i=0;i<t.length;i++){ var c=t.charAt(i); if (GSM_BASIC.indexOf(c)<0 && GSM_EXT.indexOf(c)<0) return false; } return true; }
 function smsInfo(t){ t=String(t||""); var n=t.length, gsm=isGsm7(t), single=gsm?160:70, concat=gsm?153:67; if (n===0) return {chars:0, segs:0, enc:gsm?"GSM-7":"Unicode"}; if (n<=single) return {chars:n, segs:1, enc:gsm?"GSM-7":"Unicode"}; return {chars:n, segs:Math.ceil(n/concat), enc:gsm?"GSM-7":"Unicode"}; }
 function textedWithMessage(l, msg){ var m=String(msg||"").trim(); if (!m) return false; return history(l).some(function(e){ var n=String(e.notes||""); return (e.outcome==="Bulk text" || n.indexOf("Bulk text")===0) && (n===m || n.indexOf(m)>=0 || n.indexOf(m.slice(0,80))>=0); }); }
-function bulkRecipients(opts){ opts=opts||{}; var group=opts.group||"All", branch=opts.branch||"", skip=!!opts.skipTexted, msg=opts.message||""; return (leads||[]).filter(function(l){ if (l.removed) return false; if (isStopped(l)) return false; if (!phMobile(l.phone)) return false; if (group && group!=="All" && l.group!==group) return false; if (branch && String(l.branch||"").trim()!==branch) return false; if (skip && textedWithMessage(l, msg)) return false; return true; }); }
+function bulkRecipients(opts){ opts=opts||{}; var group=opts.group||"All", branch=opts.branch||"", skip=!!opts.skipTexted, msg=opts.message||""; var pk=group&&group!=="All"? (group==="Buy 2 Take 1"?"BUY2":(function(){ for (var i=0;i<PRODUCT_GROUPS.length;i++) if (PRODUCT_GROUPS[i].interest===group) return PRODUCT_GROUPS[i].key; if (group===OTHER_GROUP.interest) return "OTHER"; return ""; })()) : ""; return (leads||[]).filter(function(l){ if (l.removed) return false; if (isStopped(l)) return false; if (!phMobile(l.phone)) return false; if (pk){ if (productGroupOf(l)!==pk) return false; } else if (group && group!=="All" && l.group!==group) return false; if (branch){ var use=branchNorm(l.branch)||branchNorm(l.nearest); if (use!==branchNorm(branch)) return false; } if (skip && textedWithMessage(l, msg)) return false; return true; }); }
 function smsHref(num, body){ var n=phMobile(num), b=encodeURIComponent(body||""); var ios=/iPhone|iPad|iPod/i.test(navigator.userAgent||""); return ios? ("sms:"+n+"&body="+b) : ("sms:"+n+"?body="+b); }
 function uniqueBranches(){ var s={}, out=[]; (leads||[]).forEach(function(l){ var b=String(l.branch||"").trim(); if (b && !s[b]){ s[b]=1; out.push(b); } }); out.sort(); return out; }
 function closeBulk(){ window.__bulkWaiting=false; var el=document.getElementById("bulk"); if (el){ el.style.display="none"; el.innerHTML=""; } }
-function openBulk(){ var el=document.getElementById("bulk"); if (!el) return; el.hidden=false; var s=getBulk(); if (s && s.queue && (s.sent||[]).length>0 && (s.sent||[]).length<s.queue.length && !s.waiting){ renderBulkStepper(el, s); el.style.display="block"; return; } renderBulkSetup(el, s||{}); el.style.display="block"; }
+function openBulk(preset){ var el=document.getElementById("bulk"); if (!el) return; el.hidden=false; var s=getBulk(); if (preset){ if (preset.group) s.group=preset.group; if (preset.branch!=null) s.branch=preset.branch; } if (s && s.queue && (s.sent||[]).length>0 && (s.sent||[]).length<s.queue.length && !s.waiting){ renderBulkStepper(el, s); el.style.display="block"; return; } renderBulkSetup(el, s||{}); el.style.display="block"; }
 function renderBulkSetup(el, s){
   var group=s.group||"Free reading eyeglass", branch=s.branch||"", skip=s.skipTexted!==false, msg=(s.message!=null?s.message:BULK_FREE_MSG);
   el.innerHTML='<div class="bh"><h2>Bulk Text</h2><button type="button" id="bulkx">Close</button></div>'+
@@ -758,12 +964,13 @@ setTimeout(tickDue, 800);
 document.getElementById("exit").onclick=function(){
   if (!confirm("Log out of Santos Leads? Saved tab and position will be cleared. Your call log and sync setup stay saved on this phone.")) return;
   try { localStorage.removeItem(SKEY); sessionStorage.clear(); } catch(e){}
-  clearTimeout(scrollTimer); current="HOT"; document.getElementById("bye").style.display="block"; document.getElementById("jc").style.display="none"; window.scrollTo(0,0);
+  clearTimeout(scrollTimer); current="HOT"; openGroup=""; document.body.classList.remove("home","ingroup","settings"); document.getElementById("bye").style.display="block"; document.getElementById("jc").style.display="none"; window.scrollTo(0,0);
 };
 document.getElementById("reopen").onclick=function(){ document.getElementById("bye").style.display="none"; render(); window.scrollTo(0,0); load(true); };
 if ("scrollRestoration" in history) history.scrollRestoration="manual";
-if ("serviceWorker" in navigator) { window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js?v=16",{scope:"./"}).catch(function(){}); }); }
+if ("serviceWorker" in navigator) { window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js?v=17",{scope:"./"}).catch(function(){}); }); }
 renderTools();
+if (!DEMO_ON && loadSheetCache()) keepView(render);
 load();
 </script>
 </body>
