@@ -104,6 +104,16 @@ details.hist ol{margin:4px 0 0 18px;padding:0;line-height:1.5}
 .duepill{display:inline-block;margin-top:6px;font-size:13px;font-weight:800;border-radius:8px;padding:3px 8px;background:#E3F2FD;color:#1565C0}
 .duepill.soon{background:#FCE8B2;color:#7A4B00}
 .duepill.late{background:#fff;color:#1565C0;border:2px solid #1565C0}
+/* v13: Call button color by timing */
+.btn.call.timing-urgent,#callnow .cncall.timing-urgent{background:#CC0000;color:#fff}
+.btn.call.timing-late,#callnow .cncall.timing-late{background:#F9AB00;color:#1d2430}
+.btn.call.timing-ahead,#callnow .cncall.timing-ahead{background:#1E8E3E;color:#fff}
+.timingleg{margin:6px 12px 0;font-size:13px;font-weight:700;color:#0B3C5D;line-height:1.4}
+.timingleg.onblue{margin:8px 0 2px;color:#fff;font-weight:700;font-size:13px}
+.timingleg .tdot{display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 4px 0 2px;vertical-align:middle}
+.timingleg .tdot.urgent{background:#CC0000}
+.timingleg .tdot.late{background:#F9AB00}
+.timingleg .tdot.ahead{background:#1E8E3E}
 </style>
 </head>
 <body>
@@ -119,6 +129,7 @@ details.hist ol{margin:4px 0 0 18px;padding:0;line-height:1.5}
 <div id="banner"></div>
 <div id="iambar"></div>
 <div id="callnow"></div>
+<div id="timingleg" class="timingleg"></div>
 <div id="status">Loading&hellip;</div>
 <div id="tools"></div>
 <main id="list"></main>
@@ -510,7 +521,10 @@ function detectNew(arr){ var who=iAm(); var mine=(arr||[]).filter(function(l){ r
 function markSeen(){ var who=iAm(); var ids=leads.filter(function(l){ return !l.removed && (!who || assignedCaller(l)===who); }).map(function(l){return l.id;}); var prev={}; try{ (JSON.parse(localStorage.getItem(SEENKEY)||"{\"ids\":[]}").ids||[]).forEach(function(id){ prev[id]=1; }); }catch(e){} ids.forEach(function(id){ prev[id]=1; }); try{ localStorage.setItem(SEENKEY, JSON.stringify({ids:Object.keys(prev), at:Date.now()})); }catch(e){} lastNew=[]; }
 function announceNew(neu){ var fresh=neu.filter(function(l){ return !announcedNew[l.id]; }); fresh.forEach(function(l){ announcedNew[l.id]=1; }); lastNew=neu; if (fresh.length) fireNote(fresh.length+" new lead"+(fresh.length>1?"s":"")+" to call", fresh.map(function(l){ return l.name+" ("+assignedCaller(l)+")"; }).join(", "), "new-leads"); }
 function jumpToLead(){ var id=null; try{ id=new URLSearchParams(location.search).get("lead"); }catch(e){} if (!id && location.hash){ var m=location.hash.match(/lead-?([A-Za-z0-9]+)/i); if (m) id=m[1]; } if (!id) return; var el=document.getElementById("lead-"+id); if (el){ el.scrollIntoView({block:"center"}); el.classList.add("justcalled"); } }
-function paintCallNow(){ var box=document.getElementById("callnow"); if (!box) return; var items=leads.filter(function(l){ var d=dueInfo(l); return dueActive(d) && isMine(l); }); if (!items.length){ box.style.display="none"; box.innerHTML=""; return; } items.sort(function(a,b){ return (dueInfo(a).mins)-(dueInfo(b).mins); }); box.style.display="block"; box.innerHTML='<b class="ttl">\uD83D\uDD14 Call now \u00B7 '+items.length+' lead'+(items.length>1?'s':'')+' at or near their preferred time</b>'+items.map(function(l){ var d=dueInfo(l); return '<div class="cn"><span class="cdown">'+esc(d.label)+'</span><span class="nm">'+esc(l.name)+' <small style="font-weight:500;opacity:.9">\u00B7 '+(l.ctype==="Specific time"?"Doc Bien":esc(assignedCaller(l)))+' \u00B7 '+esc(l.group)+'</small></span>'+(l.phone? '<a class="cncall" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'">\uD83D\uDCDE Call</a>':'')+'</div>'; }).join(""); }
+function callTiming(l){ var d=dueInfo(l); if (!d || d.state==="called") return ""; if (d.state==="late") return "late"; if (d.state==="due" || d.state==="soon") return "urgent"; if (d.state==="later") return "ahead"; return ""; }
+function timingClass(l, base){ var t=callTiming(l); return t? (base+" timing-"+t) : base; }
+function legendHtml(onBlue){ return '<div class="timingleg'+(onBlue?' onblue':'')+'"><span class="tdot urgent"></span> Red urgent \u00B7 <span class="tdot late"></span> Yellow late \u00B7 <span class="tdot ahead"></span> Green ahead</div>'; }
+function paintCallNow(){ var box=document.getElementById("callnow"), leg=document.getElementById("timingleg"); if (!box) return; var items=leads.filter(function(l){ var d=dueInfo(l); return dueActive(d) && isMine(l); }); if (!items.length){ box.style.display="none"; box.innerHTML=""; if (leg){ leg.style.display="block"; leg.innerHTML=legendHtml(false); } return; } items.sort(function(a,b){ return (dueInfo(a).mins)-(dueInfo(b).mins); }); box.style.display="block"; if (leg) leg.style.display="none"; box.innerHTML='<b class="ttl">\uD83D\uDD14 Call now \u00B7 '+items.length+' lead'+(items.length>1?'s':'')+' at or near their preferred time</b>'+legendHtml(true)+items.map(function(l){ var d=dueInfo(l); return '<div class="cn"><span class="cdown">'+esc(d.label)+'</span><span class="nm">'+esc(l.name)+' <small style="font-weight:500;opacity:.9">\u00B7 '+(l.ctype==="Specific time"?"Doc Bien":esc(assignedCaller(l)))+' \u00B7 '+esc(l.group)+'</small></span>'+(l.phone? '<a class="'+timingClass(l,"cncall")+'" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'">\uD83D\uDCDE Call</a>':'')+'</div>'; }).join(""); }
 function tickDue(){ if (document.getElementById("bye") && document.getElementById("bye").style.display==="block") return; leads.forEach(function(l){ if (!isMine(l)) return; var d=dueInfo(l); if (!dueActive(d)) return; var key=l.id+"@"+d.start; if (d.mins<=0 && d.mins>=-1 && !hasFired(key+"@start")){ markFired(key+"@start"); fireNote("Call now: "+l.name, (l.ctype==="Specific time"?"Preferred call time is now":"Call slot is now")+" \u00B7 "+(l.phone||""), "slot-"+l.id); } else if (d.state==="soon" && !hasFired(key+"@soon")){ markFired(key+"@soon"); fireNote("Call in "+d.mins+" min: "+l.name, assignedCaller(l)+" \u00B7 "+(l.phone||"")+" \u00B7 open Santos Leads to call", "soon-"+l.id); } }); paintCallNow(); var pills=document.querySelectorAll("[data-duepill]"); Array.prototype.forEach.call(pills,function(el){ var l=findLead(el.getAttribute("data-duepill")); var d=l&&dueInfo(l); if (d&&dueActive(d)) el.textContent=d.label; }); }
 function dueHtml(l){ var d=dueInfo(l); if (!dueActive(d)) return ""; return '<div class="duepill '+(d.state==="late"?"late":(d.state==="soon"?"soon":""))+'" data-duepill="'+esc(l.id)+'">\uD83D\uDD14 '+esc(d.label)+'</div>'; }
 document.addEventListener("pointerdown", unlockAudio, {passive:true});
@@ -554,7 +568,7 @@ function render(err){
       '\uD83C\uDFE0 Location: <b>'+esc(l.loc||'\u2014 itanong po')+'</b>'+(l.nearest&&l.nearest!==l.branch? ' (nearest: '+esc(l.nearest)+')':'')+'<br>'+
       '\uD83C\uDF82 Age: <b>'+esc(l.age||'\u2014 itanong po')+'</b>'+(l.elig==='Yes'? ' <span class="st" style="background:#D9EAD3;color:#1E6B2E">\u2713 39+ FREE reading eyeglass</span>' : (l.elig==='No'? ' <span class="st" style="background:#FCE8B2;color:#7A4B00">under 39 \u2013 no free eyeglass</span>':''))+'<br>'+'\uD83D\uDC68\u200D\u2695\uFE0F Doc\u2019s call: <b>'+esc(l.docTime||'\u2014 itanong po')+'</b><br>'+
       (l.summary? '\uD83D\uDCDD <i>'+esc(l.summary)+'</i><br>':'')+'<span class="st">'+esc(l.status)+'</span>'+''+(/^y/i.test(l.kita||'')? ' <span class="st" style="background:#FDE2E1;color:#B00">KITA</span>':'')+(l.pref? ' &nbsp; \uD83D\uDD52 '+esc(l.pref):'')+' &nbsp; <span style="color:#777">'+esc(l.phone)+'</span></div>'+histHtml(l)+'</div>'+
-      '<div class="btns"><a class="btn call" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row)+'">\uD83D\uDCDE Call</a>'+
+      '<div class="btns"><a class="btn '+timingClass(l,"call")+'" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row)+'">\uD83D\uDCDE Call</a>'+
       '<a class="btn text" href="'+esc(sms)+'" data-act="text" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row)+'">\uD83D\uDCAC Text</a>'+
       '<a class="btn upd" href="'+esc(upd)+'" target="_blank" rel="noopener">\u270F\uFE0F Update status in Sheet</a>'+
       (l.removed? '<button class="btn rst" data-restore="'+esc(l.id)+'">\u21A9 Restore to call list</button>' : (l.visited==="Yes"? '<button class="btn rmv" style="background:#1E6B2E;color:#fff;border-color:#1E6B2E" data-remove="'+esc(l.id)+'" data-reason="Visited (job order match)">\u2705 Confirm visit &amp; remove</button>' : '<button class="btn rmv" data-remove="'+esc(l.id)+'">\uD83D\uDDD1 Remove from list</button>'))+'</div></div>';
