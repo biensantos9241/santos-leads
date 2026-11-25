@@ -2,8 +2,8 @@
  "name": "Santos Leads",
  "short_name": "Santos Leads",
  "description": "Santos Optical call & text list",
- "start_url": "./index.html",
- "scope": "./",
+ "start_url": "/santos-leads/index.html",
+ "scope": "/santos-leads/",
  "display": "standalone",
  "background_color": "#0B3C5D",
  "theme_color": "#CC0000",
@@ -24,5 +24,9 @@
    "type": "image/png",
    "purpose": "maskable"
   }
- ]
+ ],
+ "id": "/santos-leads/",
+ "launch_handler": {
+  "client_mode": "focus-existing"
+ }
 }
