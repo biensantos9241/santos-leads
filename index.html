@@ -65,7 +65,7 @@ main{padding:6px 12px 40px}
 <main id="list"></main>
 <div class="help">
   <b>Add to home screen:</b> Android (Chrome): &#8942; menu &rarr; <i>Add to Home screen</i>. iPhone (Safari): Share &rarr; <i>Add to Home Screen</i>.<br>
-  Clinic hours: Mon&ndash;Sat 8AM&ndash;6PM. Walk-in, first come first serve. Closed Sundays &amp; Nov 1, Nov 2, Dec 25, Jan 1, Jan 31, Holy Week.
+  Clinic hours: Mon&ndash;Sat 8AM&ndash;6PM. Walk-in, first come first serve, walang limit sa pasyente. FREE reading eyeglass: 39+ only. Closed Sundays &amp; Nov 1, Nov 2, Dec 25, Jan 1, Jan 31, Holy Week.
 </div>
 <script>
 // ---- Config ----
@@ -95,21 +95,21 @@ var GCOLOR = {}; GROUPS.forEach(function(g){ GCOLOR[g.key]=g.color; });
 
 // Demo rows (fake TEST leads) used only when the live Sheet can't be read.
 var DEMO = [
- ["L001","HOT","TEST Maria Cruz","+639170000001","Wide Progressive (Essilor)","Paso de Blas","Tue, Dec 1, 2026","New","8:30 AM","2","Valenzuela (Paso de Blas area)","Paso de Blas","Weekdays 10-11 AM","Yes"],
- ["L002","HOT","TEST Jose Reyes","+639170000002","Wide Progressive (Essilor)","Quiapo","Tue, Dec 1, 2026","Scheduled","Morning","3","Sampaloc, Manila","Quiapo","After 5 PM","Yes"],
- ["L004","HOT","TEST Pedro Garcia","+639170000004","Starter Progressive","SBP","Mon, Nov 30, 2026","Call Back Later","Anytime","5","Malabon (San Agustin)","SBP","After 3 PM","Yes"],
- ["L003","HOT","TEST Ana Santos","+639170000003","Starter Progressive","Maypajo","Mon, Nov 30, 2026","Called-No Answer","Afternoon","4","Caloocan (Maypajo)","Maypajo","Lunch, 12-1 PM","No"],
- ["L005","HOT","TEST Liza Mendoza","+639170000005","PhotoBlue","Symaco","Tue, Dec 1, 2026","New","Lunch break","6","Malabon Bayan","Symaco","Morning 9-10 AM","Yes"],
- ["L010","WARM","TEST Nestor Aquino","+639170000010","Free reading eyeglass","Maypajo","Mon, Nov 30, 2026","Call Back Later","Anytime","11","Caloocan","Maypajo","2-4 PM","Yes"],
- ["L009","WARM","TEST Rosa Bautista","+639170000009","Free reading eyeglass","Tangos","Tue, Dec 1, 2026","New","Morning","10","Tangos, Navotas","Tangos","Anytime before 6 PM","Yes"],
- ["L007","WARM","TEST Carmen Lopez","+639170000007","Other Essilor product","Quiapo","Mon, Nov 30, 2026","New","Evening (before 6PM)","8","Sta. Cruz, Manila","Quiapo","Saturday morning","Yes"]
+ ["L001","HOT","TEST Maria Cruz","+639170000001","Wide Progressive (Essilor)","Paso de Blas","Tue, Dec 1, 2026","New","8:30 AM","2","Valenzuela (Paso de Blas area)","Paso de Blas","Weekdays 10-11 AM","Yes","58","Yes"],
+ ["L002","HOT","TEST Jose Reyes","+639170000002","Wide Progressive (Essilor)","Quiapo","Tue, Dec 1, 2026","Scheduled","Morning","3","Sampaloc, Manila","Quiapo","After 5 PM","Yes","47","Yes"],
+ ["L004","HOT","TEST Pedro Garcia","+639170000004","Starter Progressive","SBP","Mon, Nov 30, 2026","Call Back Later","Anytime","5","Malabon (San Agustin)","SBP","After 3 PM","Yes","61","Yes"],
+ ["L003","HOT","TEST Ana Santos","+639170000003","Starter Progressive","Maypajo","Mon, Nov 30, 2026","Called-No Answer","Afternoon","4","Caloocan (Maypajo)","Maypajo","Lunch, 12-1 PM","No","52","Yes"],
+ ["L005","HOT","TEST Liza Mendoza","+639170000005","PhotoBlue","Symaco","Tue, Dec 1, 2026","New","Lunch break","6","Malabon Bayan","Symaco","Morning 9-10 AM","Yes","34","No"],
+ ["L010","WARM","TEST Nestor Aquino","+639170000010","Free reading eyeglass","Maypajo","Mon, Nov 30, 2026","Call Back Later","Anytime","11","Caloocan","Maypajo","2-4 PM","Yes","41","Yes"],
+ ["L009","WARM","TEST Rosa Bautista","+639170000009","Free reading eyeglass","Tangos","Tue, Dec 1, 2026","New","Morning","10","Tangos, Navotas","Tangos","Anytime before 6 PM","Yes","66","Yes"],
+ ["L007","WARM","TEST Carmen Lopez","+639170000007","Other Essilor product","Quiapo","Mon, Nov 30, 2026","New","Evening (before 6PM)","8","Sta. Cruz, Manila","Quiapo","Saturday morning","Yes","29","No"]
 ];
 var TEMPLATES = {
- "Wide Progressive (Essilor)": "Hi {Name}! FREE reading eyeglass + try Essilor Wide Progressive sa Santos Optical {Branch}. Walk-in hanggang {Deadline}, Mon-Sat 8AM-6PM, first come first serve. Malapit po ba kayo sa {Branch}? Anong oras po kayo pwedeng tawagan ni Doc Bien Santos? CALL US or comment KITA. Reply STOP to opt out.",
- "Starter Progressive": "Hi {Name}! FREE reading eyeglass + P950 OFF Starter Progressive w/ frame sa Santos Optical {Branch}. Walk-in hanggang {Deadline}, Mon-Sat 8AM-6PM, first come first serve. Malapit po ba kayo sa {Branch}? Anong oras po kayo pwedeng tawagan ni Doc Bien Santos? CALL US or comment KITA. Reply STOP to opt out.",
- "PhotoBlue": "Hi {Name}! FREE reading eyeglass + PhotoBlue BUY 1 TAKE 3 (3 P950 vouchers) sa Santos Optical {Branch}. Walk-in hanggang {Deadline}, Mon-Sat 8AM-6PM, first come first serve. Malapit po ba kayo sa {Branch}? Anong oras po kayo pwedeng tawagan ni Doc Bien Santos? CALL US or comment KITA. Reply STOP to opt out.",
- "Free reading eyeglass": "Hi {Name}! FREE reading eyeglass sa walk-in visit ninyo sa Santos Optical {Branch}. Walk-in hanggang {Deadline}, Mon-Sat 8AM-6PM, first come first serve. Malapit po ba kayo sa {Branch}? Anong oras po kayo pwedeng tawagan ni Doc Bien Santos? CALL US or comment KITA. Reply STOP to opt out.",
- "Other Essilor product": "Hi {Name}! FREE reading eyeglass + Essilor lens check sa Santos Optical {Branch}. Walk-in hanggang {Deadline}, Mon-Sat 8AM-6PM, first come first serve. Malapit po ba kayo sa {Branch}? Anong oras po kayo pwedeng tawagan ni Doc Bien Santos? CALL US or comment KITA. Reply STOP to opt out."
+ "Wide Progressive (Essilor)": "Hi {Name}! FREE reading eyeglass (39+) + try Essilor Wide Progressive sa Santos Optical {Branch}. Walk-in hanggang {Deadline}, Mon-Sat 8AM-6PM, first come first serve, walang limit sa pasyente. Malapit po ba ang {Branch}? Kailan po pwede tumawag si Doc Bien Santos? CALL US or comment KITA. Reply STOP to opt out.",
+ "Starter Progressive": "Hi {Name}! FREE reading eyeglass (39+) + P950 OFF Starter Progressive w/ frame sa Santos Optical {Branch}. Walk-in hanggang {Deadline}, Mon-Sat 8AM-6PM, first come first serve, walang limit sa pasyente. Malapit po ba ang {Branch}? Kailan po pwede tumawag si Doc Bien Santos? CALL US or comment KITA. Reply STOP to opt out.",
+ "PhotoBlue": "Hi {Name}! FREE reading eyeglass (39+) + PhotoBlue BUY 1 TAKE 3 (3xP950 vouchers) sa Santos Optical {Branch}. Walk-in hanggang {Deadline}, Mon-Sat 8AM-6PM, first come first serve, walang limit sa pasyente. Malapit po ba ang {Branch}? Kailan po pwede tumawag si Doc Bien Santos? CALL US or comment KITA. Reply STOP to opt out.",
+ "Free reading eyeglass": "Hi {Name}! FREE reading eyeglass (39+) sa Santos Optical {Branch}. Walk-in hanggang {Deadline}, Mon-Sat 8AM-6PM, first come first serve, walang limit sa pasyente. Malapit po ba ang {Branch}? Kailan po pwede tumawag si Doc Bien Santos? CALL US or comment KITA. Reply STOP to opt out.",
+ "Other Essilor product": "Hi {Name}! FREE reading eyeglass (39+) + Essilor lens check sa Santos Optical {Branch}. Walk-in hanggang {Deadline}, Mon-Sat 8AM-6PM, first come first serve, walang limit sa pasyente. Malapit po ba ang {Branch}? Kailan po pwede tumawag si Doc Bien Santos? CALL US or comment KITA. Reply STOP to opt out."
 };
 
 var leads = [], current = "HOT", usingDemo = false;
@@ -132,7 +132,7 @@ function fill(tpl,l){ return (tpl||"").split("{Name}").join(l.name).split("{Bran
 function fromRow(r,idx){
   var g=function(name,fallback){ var i=idx[name]; return i===undefined? (fallback===undefined?"":r[fallback]) : r[i]; };
   var l={id:g("Lead ID",0),priority:g("Priority",1),name:g("Name",2),phone:(g("Phone",3)||"").replace(/[^\d+]/g,""),group:g("Interest Group",4),
-         branch:g("Branch",5),deadline:g("Visit Deadline",6),status:g("Status",7),pref:g("Preferred Call Time",8),row:g("Leads Row",9),loc:g("Location/Area",10),nearest:g("Nearest Branch",11),docTime:g("Best Time for Doc's Call",12),kita:g("KITA Comment",13),msg:idx["SMS Message"]!==undefined? r[idx["SMS Message"]]:""};
+         branch:g("Branch",5),deadline:g("Visit Deadline",6),status:g("Status",7),pref:g("Preferred Call Time",8),row:g("Leads Row",9),loc:g("Location/Area",10),nearest:g("Nearest Branch",11),docTime:g("Best Time for Doc's Call",12),kita:g("KITA Comment",13),age:g("Age",14),elig:g("39+ Eligible",15),msg:idx["SMS Message"]!==undefined? r[idx["SMS Message"]]:""};
   if (!l.msg) l.msg=fill(TEMPLATES[l.group],l);
   return l;
 }
@@ -173,7 +173,7 @@ function render(err){
       '<div class="grp" style="color:'+col+'">'+esc(l.group)+'</div>'+
       '<div class="meta">\uD83D\uDCCD <b>'+esc(l.branch)+'</b> &nbsp; \u23F3 until <b>'+esc(l.deadline)+'</b><br>'+
       '\uD83C\uDFE0 Location: <b>'+esc(l.loc||'\u2014 itanong po')+'</b>'+(l.nearest&&l.nearest!==l.branch? ' (nearest: '+esc(l.nearest)+')':'')+'<br>'+
-      '\uD83D\uDC68\u200D\u2695\uFE0F Doc\u2019s call: <b>'+esc(l.docTime||'\u2014 itanong po')+'</b><br>'+
+      '\uD83C\uDF82 Age: <b>'+esc(l.age||'\u2014 itanong po')+'</b>'+(l.elig==='Yes'? ' <span class="st" style="background:#D9EAD3;color:#1E6B2E">\u2713 39+ FREE reading eyeglass</span>' : (l.elig==='No'? ' <span class="st" style="background:#FCE8B2;color:#7A4B00">under 39 \u2013 no free eyeglass</span>':''))+'<br>'+'\uD83D\uDC68\u200D\u2695\uFE0F Doc\u2019s call: <b>'+esc(l.docTime||'\u2014 itanong po')+'</b><br>'+
       '<span class="st">'+esc(l.status)+'</span>'+(/^y/i.test(l.kita||'')? ' <span class="st" style="background:#FDE2E1;color:#B00">KITA</span>':'')+(l.pref? ' &nbsp; \uD83D\uDD52 '+esc(l.pref):'')+' &nbsp; <span style="color:#777">'+esc(l.phone)+'</span></div></div>'+
       '<div class="btns"><a class="btn call" href="tel:'+esc(l.phone)+'">\uD83D\uDCDE Call</a>'+
       '<a class="btn text" href="'+esc(sms)+'">\uD83D\uDCAC Text</a>'+
