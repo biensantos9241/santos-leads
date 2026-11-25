@@ -1,6 +1,6 @@
 // Santos Leads service worker: offline app shell. Sheet data (docs.google.com) is never cached.
-var CACHE = "santos-leads-v2";
-var SHELL = ["./", "./index.html", "./manifest.webmanifest", "./apple-touch-icon.png", "./icon-192.png", "./icon-512.png"];
+var CACHE = "santos-leads-v3";
+var SHELL = ["./", "./index.html", "./manifest.webmanifest"]; // icons are inlined as data URIs
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
 });
