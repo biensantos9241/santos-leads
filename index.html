@@ -318,8 +318,11 @@ function productInterest(key){
 function otherNeeded(){ return (leads||[]).some(function(l){ return productGroupOf(l)==="OTHER"; }); }
 function homeGroups(){ return PRODUCT_GROUPS.concat(otherNeeded()? [OTHER_GROUP] : []); }
 function isNeedToCall(l){ return !!(l && !l.removed && !isVisited(l) && !isStopped(l)); }
-function needToCallCount(key){ return (leads||[]).filter(function(l){ return productGroupOf(l)===key && passBranch(l) && isNeedToCall(l); }).length; }
 function passProduct(l){ return !openGroup || openGroup==="SETTINGS" || productGroupOf(l)===openGroup; }
+function passCaller(l){ return isMine(l); }
+function inGroupBranch(l, key){ return productGroupOf(l)===(key||openGroup) && passBranch(l) && passCaller(l); }
+function needToCallCount(key){ return (leads||[]).filter(function(l){ return inGroupBranch(l, key) && isNeedToCall(l); }).length; }
+function groupVisibleLeads(tab){ tab=tab||current; return (leads||[]).filter(function(l){ return inTab(l,tab) && passBranch(l) && passProduct(l) && passCaller(l); }); }
 function slimLead(l){
   var o={}, keys=["id","priority","name","phone","group","branch","deadline","status","pref","row","loc","nearest","docTime","kita","age","elig","summary","score","slot","ctype","msg","callCount","lastCalled","lastBy","lastOutcome","removed","visited","visitDate","visitBranch","joAmount","matchBasis"];
   keys.forEach(function(k){ o[k]=l[k]; });
@@ -350,8 +353,8 @@ function renderBranchBar(){
   el.innerHTML='<label for="branchsel">Branch</label><select id="branchsel" aria-label="Select branch">'+BRANCHES.map(function(b){ return '<option value="'+esc(b.id)+'"'+(b.id===cur?' selected':'')+'>'+esc(b.label)+'</option>'; }).join("")+'</select>';
   document.getElementById("branchsel").onchange=function(){ setBranch(this.value); render(); renderTools(); };
 }
-function goHome(){ saveNow(); openGroup=""; setState({product:""}); current="HOT"; render(); window.scrollTo(0,0); }
-function openProduct(key){ saveNow(); openGroup=key||""; setState({product:openGroup}); if (current!=="HOT" && current!=="ALL" && current!=="REMOVED") current="HOT"; setState({tab:current}); render(); window.scrollTo(0,0); }
+function goHome(){ saveNow(); openGroup=""; setState({product:""}); current="ALL"; render(); window.scrollTo(0,0); }
+function openProduct(key){ saveNow(); openGroup=key||""; if (openGroup && openGroup!=="SETTINGS") current="ALL"; setState({product:openGroup, tab:current}); render(); window.scrollTo(0,0); }
 function renderBackBar(title){
   var el=document.getElementById("backbar"); if (!el) return;
   el.hidden=false; el.classList.add("show");
@@ -434,7 +437,7 @@ var TEMPLATES = {
  "Other Essilor product": "Hi {Name}! Santos Optical {Branch}: FREE reading eyeglass (39+) + Essilor lens check. Anytime po this week. Wait po namin kayo. Kailan po ba kayo makakapunta? Until {Deadline}, Mon-Sat 8AM-6PM, walk-in, first come first serve, walang limit sa pasyente. Ipakita po ito sa staff. Malapit po ba kayo dito? Kailan po pwede tumawag si Doc Bien Santos? CALL US or comment KITA. Reply STOP to opt out."
 };
 
-var leads = [], current = "HOT", usingDemo = false, lastErr = "", lastLoad = 0, loading = false;
+var leads = [], current = "ALL", usingDemo = false, lastErr = "", lastLoad = 0, loading = false;
 // ---- Saved view state (stays until Exit) ----
 var SKEY = "santosLeads.state.v1";
 function getState(){ try { return JSON.parse(localStorage.getItem(SKEY)) || {}; } catch(e){ return {}; } }
@@ -729,12 +732,12 @@ function visitHtml(l){ if (l.visited!=="Yes" && isVisited(l)) return '<div class
   return ''; }
 
 /*CALL-NOTIFY-PATCH*/
-var SEENKEY="santosLeads.seen.v1", FIREKEY="santosLeads.notifyFired.v1", NPERMKEY="santosLeads.notifyAsked.v1", FILTERKEY="santosLeads.showMine.v1";
+var SEENKEY="santosLeads.seen.v1", FIREKEY="santosLeads.notifyFired.v1", NPERMKEY="santosLeads.notifyAsked.v1", FILTERKEY="santosLeads.showMine.v2";
 var lastNew=[], announcedNew={}, _ac=null, dueTimer=null;
 function manilaNowDate(){ var q=null; try{ q=new URLSearchParams(location.search).get("now"); }catch(e){} if (q){ var d=new Date(q); if (!isNaN(d.getTime())) return d; } return new Date(); }
 function assignedCaller(l){ if ((l.ctype||"")==="Specific time") return "Doc Bien"; var b=(l.branch||l.nearest||"").trim(); var map={"Paso de Blas":"Paso de Blas staff","Maypajo":"Maypajo staff","Quiapo":"Quiapo staff","Symaco":"Symaco staff","SBP":"SBP staff","Tangos":"Tangos staff"}; return map[b]||"Central caller"; }
 function iAm(){ try{ return localStorage.getItem(CKEY)||""; }catch(e){ return ""; } }
-function showMine(){ try{ return (localStorage.getItem(FILTERKEY)||"mine")!=="all"; }catch(e){ return true; } }
+function showMine(){ try{ return localStorage.getItem(FILTERKEY)==="mine"; }catch(e){ return false; } }
 function isMine(l){ var who=iAm(); if (!who || !showMine()) return true; return assignedCaller(l)===who; }
 function parseSlot(slot){ var t=String(slot||"").replace(/📅/g," ").replace(/\s+/g," ").trim(); var m=t.match(/([A-Z][a-z]{2})\s+(\d{1,2}),(?:\s+(\d{4}),?)?\s+(\d{1,2}):(\d{2})\s*([AP]M)/i); if (!m) return 0; var MON={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11}; var mon=MON[m[1].slice(0,3)]; if (mon==null) return 0; var now=manilaNowDate(); var yr=m[3]? +m[3] : +new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Manila",year:"numeric"}).format(now); var h=+m[4], mi=+m[5], ap=m[6].toUpperCase(); if (ap==="PM"&&h<12) h+=12; if (ap==="AM"&&h===12) h=0; return Date.UTC(yr, mon, +m[2], h-8, mi); }
 function manilaDayKey(ms){ var d=new Date(ms+8*3600e3); return d.getUTCFullYear()+"-"+("0"+(d.getUTCMonth()+1)).slice(-2)+"-"+("0"+d.getUTCDate()).slice(-2); }
@@ -787,6 +790,32 @@ function paintCallNow(){ var box=document.getElementById("callnow"), leg=documen
 function tickDue(){ if (document.getElementById("bye") && document.getElementById("bye").style.display==="block") return; leads.forEach(function(l){ if (!isMine(l)) return; var d=dueInfo(l); if (!dueActive(d)) return; var key=l.id+"@"+d.start; if (d.mins<=0 && d.mins>=-1 && !hasFired(key+"@start")){ markFired(key+"@start"); fireNote("Call now: "+l.name, (l.ctype==="Specific time"?"Preferred call time is now":"Call slot is now")+" \u00B7 "+(l.phone||""), "slot-"+l.id); } else if (d.state==="soon" && !hasFired(key+"@soon")){ markFired(key+"@soon"); fireNote("Call in "+d.mins+" min: "+l.name, assignedCaller(l)+" \u00B7 "+(l.phone||"")+" \u00B7 open Santos Leads to call", "soon-"+l.id); } }); paintCallNow(); var pills=document.querySelectorAll("[data-duepill]"); Array.prototype.forEach.call(pills,function(el){ var l=findLead(el.getAttribute("data-duepill")); var d=l&&dueInfo(l); if (d) el.textContent=shortDueLabel(d); }); }
 function dueHtml(l){ var d=dueInfo(l); if (!dueActive(d)) return ""; return '<div class="duepill '+(d.state==="late"?"late":(d.state==="soon"?"soon":""))+'" data-duepill="'+esc(l.id)+'">\uD83D\uDD14 '+esc(d.label)+'</div>'; }
 document.addEventListener("pointerdown", unlockAudio, {passive:true});
+var listPaint=null;
+function cancelListPaint(){ if (listPaint && listPaint.id){ try{ cancelAnimationFrame(listPaint.id); }catch(e){} } listPaint=null; }
+function paintLeadList(parts){
+  cancelListPaint();
+  var el=document.getElementById("list"); if (!el) return;
+  if (!parts || !parts.length){
+    el.innerHTML = current==="REMOVED"? '<div class="empty">No removed leads.</div>' : '<div class="empty">No leads to call in this group \uD83C\uDF89</div>';
+    return;
+  }
+  el.innerHTML="";
+  var BATCH=40;
+  listPaint={parts:parts, i:0, el:el, id:0};
+  function step(){
+    if (!listPaint) return;
+    var p=listPaint, end=Math.min(p.i+BATCH, p.parts.length);
+    var wrap=document.createElement("div");
+    wrap.innerHTML=p.parts.slice(p.i, end).join("");
+    var frag=document.createDocumentFragment();
+    while (wrap.firstChild) frag.appendChild(wrap.firstChild);
+    p.el.appendChild(frag);
+    p.i=end;
+    if (p.i<p.parts.length) p.id=requestAnimationFrame(step);
+    else { listPaint=null; jumpToLead(); }
+  }
+  step();
+}
 function render(err){
   err = err || lastErr; applyLocal();
   document.body.classList.remove("home","ingroup","settings");
@@ -814,17 +843,18 @@ function render(err){
   var hp=document.getElementById("homepanel"); if (hp) hp.innerHTML="";
   var tabs=document.getElementById("tabs");
   tabs.innerHTML=VIEW_TABS.map(function(g){
-    var n=leads.filter(function(l){return inTab(l,g.key)&&isMine(l)&&passBranch(l)&&passProduct(l);}).length;
+    var n=groupVisibleLeads(g.key).length;
     return '<button class="tab'+(g.key===current?' on':'')+'" data-k="'+esc(g.key)+'">'+esc(g.label)+'<span class="n">'+n+'</span></button>';
   }).join("");
   Array.prototype.forEach.call(tabs.querySelectorAll(".tab"),function(el){ el.onclick=function(){ saveNow(); current=el.getAttribute("data-k"); setState({tab:current}); render(); restoreScroll(); if (window.scrollY===0) window.scrollTo(0,0); showJustCalled(); }; });
-  var list=leads.map(function(l,i){l._i=i;return l;}).filter(function(l){return inTab(l,current)&&isMine(l)&&passBranch(l)&&passProduct(l);});
+  var list=groupVisibleLeads(current).map(function(l,i){l._i=i;return l;});
   list.forEach(function(l){ l._ci=callInfo(l); l._score=Math.max(0,l.score-15*l._ci.missedLocal); });
   function vrank(l){ return l.visited==="Yes"?2:(l.visited==="Needs review"?1:0); }
   function drank(l){ var d=dueInfo(l); return dueActive(d)?0:1; }
-  list.sort(function(a,b){ return (drank(a)-drank(b)) || (vrank(a)-vrank(b)) || ((a.ctype==="Specific time"?0:1)-(b.ctype==="Specific time"?0:1)) || ((a.priority==="HOT"?0:1)-(b.priority==="HOT"?0:1)) || (b._score-a._score) || (a._i-b._i); });
+  function nrank(l){ return isNeedToCall(l)?0:1; }
+  list.sort(function(a,b){ return (nrank(a)-nrank(b)) || (drank(a)-drank(b)) || (vrank(a)-vrank(b)) || ((a.ctype==="Specific time"?0:1)-(b.ctype==="Specific time"?0:1)) || ((a.priority==="HOT"?0:1)-(b.priority==="HOT"?0:1)) || (b._score-a._score) || (a._i-b._i); });
   var lastType=null;
-  document.getElementById("list").innerHTML = list.length? list.map(function(l){
+  var listParts = list.length? list.map(function(l){
     var dnow=dueInfo(l), dueOn=dueActive(dnow);
     var col=GCOLOR[l.group]||"#999";
     var sms="sms:"+l.phone+"?&body="+encodeURIComponent(l.msg);
@@ -844,7 +874,8 @@ function render(err){
       '<a class="btn text" style="grid-column:1 / span 2" href="'+esc(sms)+'" data-act="text" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row)+'">\uD83D\uDCAC Text</a>'+
       '<a class="btn upd" href="'+esc(upd)+'" target="_blank" rel="noopener">\u270F\uFE0F Update status in Sheet</a>'+
       (l.removed? '<button class="btn rst" data-restore="'+esc(l.id)+'">\u21A9 Restore to call list</button>' : (l.visited==="Yes"? '<button class="btn rmv" style="background:#1E6B2E;color:#fff;border-color:#1E6B2E" data-remove="'+esc(l.id)+'" data-reason="Visited (job order match)">\u2705 Confirm visit &amp; remove</button>' : '<button class="btn rmv" data-remove="'+esc(l.id)+'">\uD83D\uDDD1 Remove from list</button>'))+'</div></div>';
-  }).join("") : (current==="REMOVED"? '<div class="empty">No removed leads.</div>' : '<div class="empty">No leads to call in this group \uD83C\uDF89</div>');
+  }) : [];
+  paintLeadList(listParts);
   paintCallNow(); jumpToLead(); renderTools();
   document.getElementById("status").textContent=dataSource+" \u00B7 "+leads.filter(function(l){return !l.removed;}).length+" to call \u00B7 "+leads.filter(function(l){return l.removed;}).length+" removed \u00B7 updated "+now+" (Manila) \u00B7 quiet auto-refresh every 1 min";
 }
@@ -964,11 +995,11 @@ setTimeout(tickDue, 800);
 document.getElementById("exit").onclick=function(){
   if (!confirm("Log out of Santos Leads? Saved tab and position will be cleared. Your call log and sync setup stay saved on this phone.")) return;
   try { localStorage.removeItem(SKEY); sessionStorage.clear(); } catch(e){}
-  clearTimeout(scrollTimer); current="HOT"; openGroup=""; document.body.classList.remove("home","ingroup","settings"); document.getElementById("bye").style.display="block"; document.getElementById("jc").style.display="none"; window.scrollTo(0,0);
+  clearTimeout(scrollTimer); current="ALL"; openGroup=""; document.body.classList.remove("home","ingroup","settings"); document.getElementById("bye").style.display="block"; document.getElementById("jc").style.display="none"; window.scrollTo(0,0);
 };
 document.getElementById("reopen").onclick=function(){ document.getElementById("bye").style.display="none"; render(); window.scrollTo(0,0); load(true); };
 if ("scrollRestoration" in history) history.scrollRestoration="manual";
-if ("serviceWorker" in navigator) { window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js?v=17",{scope:"./"}).catch(function(){}); }); }
+if ("serviceWorker" in navigator) { window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js?v=18",{scope:"./"}).catch(function(){}); }); }
 renderTools();
 if (!DEMO_ON && loadSheetCache()) keepView(render);
 load();
