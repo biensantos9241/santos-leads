@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Santos Leads</title>
-<meta name="theme-color" content="#CC0000">
+<meta name="theme-color" content="#1565C0">
 <meta name="robots" content="noindex, nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -93,17 +93,17 @@ details.hist ol{margin:4px 0 0 18px;padding:0;line-height:1.5}
 #iambar button{border:1px solid #c7cdd6;background:#fff;color:#0B3C5D;border-radius:18px;padding:7px 12px;font-size:13px;font-weight:700;min-height:36px}
 #iambar button.on{background:#0B3C5D;color:#fff;border-color:#0B3C5D}
 #newbadge{background:#CC0000;color:#fff;border-radius:14px;padding:6px 10px;font-size:13px;font-weight:800;border:0;min-height:36px}
-#callnow{display:none;margin:10px 12px 0;padding:12px;border-radius:12px;background:#CC0000;color:#fff;font-size:15px;line-height:1.4}
+#callnow{display:none;margin:10px 12px 0;padding:12px;border-radius:12px;background:#1565C0;color:#fff;font-size:15px;line-height:1.4}
 #callnow b.ttl{display:block;font-size:17px;margin-bottom:6px}
-#callnow .cn{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border-radius:10px;padding:8px 10px;margin-top:6px;color:#fff;text-decoration:none}
+#callnow .cn{display:flex;align-items:center;gap:8px;background:#1E88E5;border-radius:10px;padding:8px 10px;margin-top:6px;color:#fff;text-decoration:none}
 #callnow .cn .nm{font-weight:800;flex:1}
-#callnow .cdown{font-weight:800;background:#fff;color:#CC0000;border-radius:8px;padding:3px 8px;font-size:12px;white-space:nowrap}
+#callnow .cdown{font-weight:800;background:#fff;color:#1565C0;border-radius:8px;padding:3px 8px;font-size:12px;white-space:nowrap}
 #callnow .cncall{background:#fff;color:#1E8E3E;border-radius:10px;padding:8px 10px;font-weight:800;text-decoration:none;font-size:15px}
-.card.due{outline:3px solid #CC0000;box-shadow:0 0 0 4px rgba(204,0,0,.18)}
+.card.due{outline:3px solid #1565C0;box-shadow:0 0 0 4px rgba(21,101,192,.18)}
 .card.soon{outline:3px solid #E69121}
-.duepill{display:inline-block;margin-top:6px;font-size:13px;font-weight:800;border-radius:8px;padding:3px 8px;background:#FCE8E6;color:#B3261E}
+.duepill{display:inline-block;margin-top:6px;font-size:13px;font-weight:800;border-radius:8px;padding:3px 8px;background:#E3F2FD;color:#1565C0}
 .duepill.soon{background:#FCE8B2;color:#7A4B00}
-.duepill.late{background:#B3261E;color:#fff}
+.duepill.late{background:#fff;color:#1565C0;border:2px solid #1565C0}
 </style>
 </head>
 <body>
@@ -540,7 +540,7 @@ function render(err){
     var st=getState(), ci=l._ci;
     var head="";
     var vk=(dueOn?"DUE|":"")+vrank(l)+"|"+(vrank(l)?"":l.ctype);
-    if (vk!==lastType && dueOn && current!=="REMOVED"){ lastType=vk; head = '<div class="sec" style="color:#CC0000">\uD83D\uDD14 Call now \u2014 preferred / slot time</div>'; }
+    if (vk!==lastType && dueOn && current!=="REMOVED"){ lastType=vk; head = '<div class="sec" style="color:#1565C0">\uD83D\uDD14 Call now \u2014 preferred / slot time</div>'; }
     else if (vk!==lastType && vrank(l) && current!=="REMOVED"){ lastType=vk; head = vrank(l)===2? '<div class="sec" style="color:#1E6B2E">\u2705 Visited (auto-matched) \u2014 confirm &amp; remove</div>' : '<div class="sec" style="color:#7A4B00">\uD83D\uDD0E Possible walk-in \u2014 Doc please confirm</div>'; }
     else if (vk!==lastType){ lastType=vk; head = current==="REMOVED"? '<div class="sec">\uD83D\uDDD1 Removed from the call list (full history kept \u2014 tap Restore to bring back)</div>' : l.ctype==="Specific time"? '<div class="sec">\uD83D\uDCCC Call at their chosen time (Doc Bien personal call)</div>' : '<div class="sec">\uD83D\uDD52 Open slots \u2014 HOT/WARM, then score, then oldest</div>'; }
     var when = l.ctype==="Specific time"
@@ -613,7 +613,7 @@ document.getElementById("exit").onclick=function(){
 };
 document.getElementById("reopen").onclick=function(){ document.getElementById("bye").style.display="none"; render(); window.scrollTo(0,0); load(true); };
 if ("scrollRestoration" in history) history.scrollRestoration="manual";
-if ("serviceWorker" in navigator) { window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js?v=12",{scope:"./"}).catch(function(){}); }); }
+if ("serviceWorker" in navigator) { window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js?v=13",{scope:"./"}).catch(function(){}); }); }
 renderTools();
 load();
 </script>
