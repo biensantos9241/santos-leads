@@ -49,6 +49,10 @@ body.hasjc main{padding-bottom:190px}
 .call{background:#1E8E3E}.text{background:#1565C0}
 .upd{grid-column:1 / span 2;min-height:44px;font-size:15px;background:#eef1f5;color:var(--navy)}
 .empty{text-align:center;color:#666;padding:40px 10px;font-size:16px}
+.sec{margin:16px 2px 4px;font-size:14px;font-weight:800;color:#0B3C5D}
+.score{font-size:13px;font-weight:800;border-radius:8px;padding:3px 8px;background:#FFF2CC;color:#6b4e00}
+.when{margin-top:6px;font-size:15px;padding:6px 10px;border-radius:10px;background:#eef1f5}
+.when.pin{background:#FDE9B5}
 .help{margin:20px 4px;font-size:13px;color:#555;line-height:1.45}
 #exit{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.5);border-radius:10px;font-size:14px;font-weight:700;padding:8px 10px;min-height:44px}
 .card.justcalled{outline:4px solid #F9AB00;box-shadow:0 0 0 6px rgba(249,171,0,.25)}
@@ -109,14 +113,18 @@ var GCOLOR = {}; GROUPS.forEach(function(g){ GCOLOR[g.key]=g.color; });
 
 // Demo rows (fake TEST leads) used only when the live Sheet can't be read.
 var DEMO = [
- ["L001","HOT","TEST Maria Cruz","+639170000001","Wide Progressive (Essilor)","Paso de Blas","Tue, Dec 1, 2026","New","8:30 AM","2","Valenzuela (Paso de Blas area)","Paso de Blas","Weekdays 10-11 AM","Yes","58","Yes","TEST. KITA chat: FREE reading eyeglass (58, eligible) + wants to try Essilor Wide Progressive; from Valenzuela, Paso de Blas. Plans to visit Sat Nov 28. Asked if Wide Progressive is easy to get used to. Doc call: weekdays 10-11 AM."],
- ["L002","HOT","TEST Jose Reyes","+639170000002","Wide Progressive (Essilor)","Quiapo","Tue, Dec 1, 2026","Scheduled","Morning","3","Sampaloc, Manila","Quiapo","After 5 PM","Yes","47","Yes","TEST. FREE reading eyeglass (47, eligible) + Essilor Wide Progressive; from Sampaloc, Quiapo. Plans to visit Mon Nov 30. Asked about price range for progressive lenses. Doc call: after 5 PM."],
- ["L004","HOT","TEST Pedro Garcia","+639170000004","Starter Progressive","SBP","Mon, Nov 30, 2026","Call Back Later","Anytime","5","Malabon (San Agustin)","SBP","After 3 PM","Yes","61","Yes","TEST. Starter Progressive P950 OFF w/ frame + FREE reading eyeglass (61, eligible); Malabon, SBP. Plans to visit Fri Nov 27. Asked if frame choice is included. Doc call: after 3 PM."],
- ["L003","HOT","TEST Ana Santos","+639170000003","Starter Progressive","Maypajo","Mon, Nov 30, 2026","Called-No Answer","Afternoon","4","Caloocan (Maypajo)","Maypajo","Lunch, 12-1 PM","No","52","Yes","TEST. Starter Progressive P950 OFF w/ frame + FREE reading eyeglass (52, eligible); Caloocan, Maypajo. Planned visit day: not yet given. Uses old bifocals. Doc call: lunch 12-1 PM."],
- ["L005","HOT","TEST Liza Mendoza","+639170000005","PhotoBlue","Symaco","Tue, Dec 1, 2026","New","Lunch break","6","Malabon Bayan","Symaco","Morning 9-10 AM","Yes","34","No","TEST. PhotoBlue BUY 1 TAKE 3 (34, NOT eligible for free reading eyeglass - told warmly); Malabon Bayan, Symaco. Plans to visit Sat Nov 28. Works on computer all day. Doc call: 9-10 AM."],
- ["L010","WARM","TEST Nestor Aquino","+639170000010","Free reading eyeglass","Maypajo","Mon, Nov 30, 2026","Call Back Later","Anytime","11","Caloocan","Maypajo","2-4 PM","Yes","41","Yes","TEST. FREE reading eyeglass (41, eligible); Caloocan, Maypajo. Plans to visit Fri Nov 27. Asked if eye check is included. Doc call: 2-4 PM."],
- ["L009","WARM","TEST Rosa Bautista","+639170000009","Free reading eyeglass","Tangos","Tue, Dec 1, 2026","New","Morning","10","Tangos, Navotas","Tangos","Anytime before 6 PM","Yes","66","Yes","TEST. FREE reading eyeglass only (66, eligible); Tangos, Navotas. Plans to visit Thu Nov 26. Asked if she can bring her husband too. Doc call: anytime before 6 PM."],
- ["L007","WARM","TEST Carmen Lopez","+639170000007","Other Essilor product","Quiapo","Mon, Nov 30, 2026","New","Evening (before 6PM)","8","Sta. Cruz, Manila","Quiapo","Saturday morning","Yes","29","No","TEST. Other Essilor - asked about anti-glare (29, NOT eligible for free reading eyeglass - told warmly); Sta. Cruz, Quiapo. Plans to visit Sat Nov 28. Doc call: Saturday morning."]
+ ["L012", "HOT", "TEST Ricardo Manalo", "+639170000012", "Wide Progressive (Essilor)", "Quiapo", "Tue, Dec 1, 2026", "New", "Late morning 10 AM–12 NN", "13", "Sta. Cruz, Manila", "Quiapo", "Late morning 10 AM–12 NN", "Yes", "50", "Yes", "TEST. Wide Progressive (Essilor) + FREE reading eyeglass (50, eligible); Sta. Cruz, Manila -> Quiapo. Planned visit: Fri, Nov 27, 2026. Doc call: Late morning 10 AM–12 NN. Source: Messenger. Asked if Wide Progressive helps for computer + reading.", "95", "📅 Thu Nov 26, 10:00 AM", "Specific time"],
+ ["L001", "HOT", "TEST Maria Cruz", "+639170000001", "Wide Progressive (Essilor)", "Paso de Blas", "Tue, Dec 1, 2026", "New", "8:30 AM", "2", "Valenzuela (Paso de Blas area)", "Paso de Blas", "Weekdays 10-11 AM", "Yes", "58", "Yes", "TEST. KITA chat: FREE reading eyeglass (58, eligible) + wants to try Essilor Wide Progressive; from Valenzuela, Paso de Blas. Plans to visit Sat Nov 28. Asked if Wide Progressive is easy to get used to. Doc call: weekdays 10-11 AM.", "85", "📅 Thu Nov 26, 8:30 AM", "Specific time"],
+ ["L002", "HOT", "TEST Jose Reyes", "+639170000002", "Wide Progressive (Essilor)", "Quiapo", "Tue, Dec 1, 2026", "Scheduled", "Morning", "3", "Sampaloc, Manila", "Quiapo", "After 5 PM", "Yes", "47", "Yes", "TEST. FREE reading eyeglass (47, eligible) + Essilor Wide Progressive; from Sampaloc, Quiapo. Plans to visit Mon Nov 30. Asked about price range for progressive lenses. Doc call: after 5 PM.", "85", "📅 Thu Nov 26, 5:00 PM", "Specific time"],
+ ["L004", "HOT", "TEST Pedro Garcia", "+639170000004", "Starter Progressive", "SBP", "Mon, Nov 30, 2026", "Call Back Later", "Anytime", "5", "Malabon (San Agustin)", "SBP", "After 3 PM", "Yes", "61", "Yes", "TEST. Starter Progressive P950 OFF w/ frame + FREE reading eyeglass (61, eligible); Malabon, SBP. Plans to visit Fri Nov 27. Asked if frame choice is included. Doc call: after 3 PM.", "80", "📅 Thu Nov 26, 3:00 PM", "Specific time"],
+ ["L005", "HOT", "TEST Liza Mendoza", "+639170000005", "PhotoBlue", "Symaco", "Tue, Dec 1, 2026", "New", "Lunch break", "6", "Malabon Bayan", "Symaco", "Morning 9-10 AM", "Yes", "34", "No", "TEST. PhotoBlue BUY 1 TAKE 3 (34, NOT eligible for free reading eyeglass - told warmly); Malabon Bayan, Symaco. Plans to visit Sat Nov 28. Works on computer all day. Doc call: 9-10 AM.", "60", "📅 Thu Nov 26, 9:00 AM", "Specific time"],
+ ["L003", "HOT", "TEST Ana Santos", "+639170000003", "Starter Progressive", "Maypajo", "Mon, Nov 30, 2026", "Called-No Answer", "Afternoon", "4", "Caloocan (Maypajo)", "Maypajo", "Lunch, 12-1 PM", "No", "52", "Yes", "TEST. Starter Progressive P950 OFF w/ frame + FREE reading eyeglass (52, eligible); Caloocan, Maypajo. Planned visit day: not yet given. Uses old bifocals. Doc call: lunch 12-1 PM.", "45", "📅 Thu Nov 26, 8:45 AM", "Specific time"],
+ ["L007", "WARM", "TEST Carmen Lopez", "+639170000007", "Other Essilor product", "Quiapo", "Mon, Nov 30, 2026", "New", "Evening (before 6PM)", "8", "Sta. Cruz, Manila", "Quiapo", "Saturday morning", "Yes", "29", "No", "TEST. Other Essilor - asked about anti-glare (29, NOT eligible for free reading eyeglass - told warmly); Sta. Cruz, Quiapo. Plans to visit Sat Nov 28. Doc call: Saturday morning.", "52", "📅 Sat Nov 28, 8:30 AM", "Specific time"],
+ ["L010", "WARM", "TEST Nestor Aquino", "+639170000010", "Free reading eyeglass", "Maypajo", "Mon, Nov 30, 2026", "Call Back Later", "Anytime", "11", "Caloocan", "Maypajo", "2-4 PM", "Yes", "41", "Yes", "TEST. FREE reading eyeglass (41, eligible); Caloocan, Maypajo. Plans to visit Fri Nov 27. Asked if eye check is included. Doc call: 2-4 PM.", "48", "📅 Thu Nov 26, 2:00 PM", "Specific time"],
+ ["L013", "WARM", "TEST Joy Santiago", "+639170000013", "Free reading eyeglass", "SBP", "Tue, Dec 1, 2026", "New", "Afternoon 1–4 PM", "14", "Tañong, Malabon", "SBP", "Afternoon 1–4 PM", "Yes", "Below 39", "No", "TEST. Free reading eyeglass (Below 39, NOT eligible for free reading eyeglass); Tañong, Malabon -> SBP. Planned visit: not yet given. Doc call: Afternoon 1–4 PM. Source: KITA comment.", "38", "📅 Thu Nov 26, 1:00 PM", "Specific time"],
+ ["L014", "HOT", "TEST Arnel Cruz", "+639170000014", "Starter Progressive", "Maypajo", "Tue, Dec 1, 2026", "New", "Open slot", "15", "Grace Park, Caloocan", "Maypajo", "", "No", "39", "Yes", "TEST. Starter Progressive + FREE reading eyeglass (39, eligible); Grace Park, Caloocan -> Maypajo. Planned visit: Sat, Nov 28, 2026. Doc call: no preferred time (open slot). Source: walk-in call.", "70", "📅 Thu Nov 26, 9:15 AM", "Open slot"],
+ ["L009", "WARM", "TEST Rosa Bautista", "+639170000009", "Free reading eyeglass", "Tangos", "Tue, Dec 1, 2026", "New", "Morning", "10", "Tangos, Navotas", "Tangos", "Anytime before 6 PM", "Yes", "66", "Yes", "TEST. FREE reading eyeglass only (66, eligible); Tangos, Navotas. Plans to visit Thu Nov 26. Asked if she can bring her husband too. Doc call: anytime before 6 PM.", "63", "📅 Thu Nov 26, 9:30 AM", "Open slot"],
+ ["L011", "WARM", "TEST Lorna Villareal", "+639170000011", "Free reading eyeglass", "Paso de Blas", "Tue, Dec 1, 2026", "New", "Open slot", "12", "Malinta, Valenzuela", "Paso de Blas", "", "No", "60", "Yes", "TEST. Free reading eyeglass (60, eligible); Malinta, Valenzuela -> Paso de Blas. Planned visit: not yet given. Doc call: no preferred time (open slot). Source: Instant Form.", "38", "📅 Thu Nov 26, 9:45 AM", "Open slot"]
 ];
 var TEMPLATES = {
  "Wide Progressive (Essilor)": "Hi {Name}! Santos Optical {Branch}: FREE reading eyeglass (39+) + Essilor Wide Progressive. Anytime po this week. Wait po namin kayo. Kailan po ba kayo makakapunta? Until {Deadline}, Mon-Sat 8AM-6PM, walk-in, first come first serve, walang limit sa pasyente. Ipakita po ito sa staff. Malapit po ba kayo dito? Kailan po pwede tumawag si Doc Bien Santos? CALL US or comment KITA. Reply STOP to opt out.",
@@ -155,7 +163,7 @@ function fill(tpl,l){ return (tpl||"").split("{Name}").join(l.name).split("{Bran
 function fromRow(r,idx){
   var g=function(name,fallback){ var i=idx[name]; return i===undefined? (fallback===undefined?"":r[fallback]) : r[i]; };
   var l={id:g("Lead ID",0),priority:g("Priority",1),name:g("Name",2),phone:(g("Phone",3)||"").replace(/[^\d+]/g,""),group:g("Interest Group",4),
-         branch:g("Branch",5),deadline:g("Visit Deadline",6),status:g("Status",7),pref:g("Preferred Call Time",8),row:g("Leads Row",9),loc:g("Location/Area",10),nearest:g("Nearest Branch",11),docTime:g("Best Time for Doc's Call",12),kita:g("KITA Comment",13),age:g("Age",14),elig:g("39+ Eligible",15),summary:g("Chat Summary (for staff)",16),msg:idx["SMS Message"]!==undefined? r[idx["SMS Message"]]:""};
+         branch:g("Branch",5),deadline:g("Visit Deadline",6),status:g("Status",7),pref:g("Preferred Call Time",8),row:g("Leads Row",9),loc:g("Location/Area",10),nearest:g("Nearest Branch",11),docTime:g("Best Time for Doc's Call",12),kita:g("KITA Comment",13),age:g("Age",14),elig:g("39+ Eligible",15),summary:g("Chat Summary (for staff)",16),score:Number(g("Lead Score",17))||0,slot:g("Calendar Slot",18),ctype:g("Call Type",19)||((g("Best Time for Doc's Call",12)||"").trim()&&!/^\s*any ?time/i.test(g("Best Time for Doc's Call",12))?"Specific time":"Open slot"),msg:idx["SMS Message"]!==undefined? r[idx["SMS Message"]]:""};
   if (!l.msg) l.msg=fill(TEMPLATES[l.group],l);
   return l;
 }
@@ -189,14 +197,21 @@ function render(err){
     return '<button class="tab'+(g.key===current?' on':'')+'" data-k="'+esc(g.key)+'">'+esc(g.label)+'<span class="n">'+n+'</span></button>';
   }).join("");
   Array.prototype.forEach.call(tabs.querySelectorAll(".tab"),function(el){ el.onclick=function(){ saveNow(); current=el.getAttribute("data-k"); setState({tab:current}); render(); restoreScroll(); if (window.scrollY===0) window.scrollTo(0,0); showJustCalled(); }; });
-  var list=leads.filter(function(l){return inTab(l,current);});
+  var list=leads.map(function(l,i){l._i=i;return l;}).filter(function(l){return inTab(l,current);});
+  list.sort(function(a,b){ return ((a.ctype==="Specific time"?0:1)-(b.ctype==="Specific time"?0:1)) || ((a.priority==="HOT"?0:1)-(b.priority==="HOT"?0:1)) || (b.score-a.score) || (a._i-b._i); });
+  var lastType=null;
   document.getElementById("list").innerHTML = list.length? list.map(function(l){
     var col=GCOLOR[l.group]||"#999";
     var sms="sms:"+l.phone+"?&body="+encodeURIComponent(l.msg);
-    var upd=EDIT_URL+"#gid="+LEADS_GID+(l.row? "&range=A"+l.row+":V"+l.row : "");
+    var upd=EDIT_URL+"#gid="+LEADS_GID+(l.row? "&range=A"+l.row+":AH"+l.row : "");
     var st=getState(), mk=(st.marks||{})[l.id];
-    return '<div class="card'+(st.last&&st.last.id===l.id?' justcalled':'')+'" id="lead-'+esc(l.id)+'" style="border-left-color:'+col+'"><div class="body">'+
-      '<div class="row1"><div class="name">'+esc(l.name)+'</div><span class="badge '+esc(l.priority)+'">'+esc(l.priority)+'</span></div>'+
+    var head="";
+    if (l.ctype!==lastType){ lastType=l.ctype; head = l.ctype==="Specific time"? '<div class="sec">\uD83D\uDCCC Call at their chosen time (Doc Bien personal call)</div>' : '<div class="sec">\uD83D\uDD52 Open slots \u2014 HOT/WARM, then score, then oldest</div>'; }
+    var when = l.ctype==="Specific time"
+      ? '<div class="when pin">\uD83D\uDC68\u200D\u2695\uFE0F Call at: <b>'+esc(l.docTime||l.pref)+'</b>'+(l.slot? ' &middot; '+esc(l.slot):'')+'</div>'
+      : '<div class="when">\uD83D\uDD52 Open slot'+(l.slot? ' &middot; <b>'+esc(l.slot)+'</b>':'')+'</div>';
+    return head+'<div class="card'+(st.last&&st.last.id===l.id?' justcalled':'')+'" id="lead-'+esc(l.id)+'" style="border-left-color:'+col+'"><div class="body">'+
+      '<div class="row1"><div class="name">'+esc(l.name)+'</div><span class="score">\u2B50 '+esc(l.score)+'</span><span class="badge '+esc(l.priority)+'">'+esc(l.priority)+'</span></div>'+when+
       '<div class="grp" style="color:'+col+'">'+esc(l.group)+'</div>'+
       '<div class="meta">\uD83D\uDCCD <b>'+esc(l.branch)+'</b> &nbsp; \u23F3 until <b>'+esc(l.deadline)+'</b><br>'+
       '\uD83C\uDFE0 Location: <b>'+esc(l.loc||'\u2014 itanong po')+'</b>'+(l.nearest&&l.nearest!==l.branch? ' (nearest: '+esc(l.nearest)+')':'')+'<br>'+
@@ -226,7 +241,7 @@ function showJustCalled(){
   var box=document.getElementById("jc"), st=getState(), l=st.last;
   if (!l || !leads.some(function(x){return x.id===l.id;})) { box.style.display="none"; document.body.classList.remove("hasjc"); return; }
   document.body.classList.add("hasjc");
-  var upd=EDIT_URL+"#gid="+LEADS_GID+(l.row? "&range=A"+l.row+":Y"+l.row : "");
+  var upd=EDIT_URL+"#gid="+LEADS_GID+(l.row? "&range=A"+l.row+":AH"+l.row : "");
   box.innerHTML='<b>'+(l.act==="text"?"\uD83D\uDCAC Just texted":"\uD83D\uDCDE Just called")+': '+esc(l.name)+'</b> \u2014 mark status:'+
     '<div class="chips">'+["Answered","No answer","Call back later","Coming in","Not interested"].map(function(m){return '<button data-m="'+m+'">'+m+'</button>';}).join("")+
     '<a href="'+esc(upd)+'" target="_blank" rel="noopener">\u270F\uFE0F Sheet</a><button class="x" data-m="">\u2715 Dismiss</button></div>';
