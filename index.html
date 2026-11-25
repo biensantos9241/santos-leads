@@ -32,6 +32,7 @@ header{position:sticky;top:0;z-index:5;background:var(--navy);color:#fff;padding
 #status{font-size:13px;padding:8px 14px;color:#555}
 #banner{display:none;margin:10px 12px 0;padding:10px 12px;border-radius:10px;background:#FFF4CE;color:#6b4e00;font-size:14px;line-height:1.35}
 main{padding:6px 12px 40px}
+body.hasjc main{padding-bottom:190px}
 .card{background:#fff;border-radius:14px;margin:10px 0;box-shadow:0 1px 3px rgba(0,0,0,.08);border-left:8px solid #999;overflow:hidden}
 .card .body{padding:12px 14px 6px}
 .row1{display:flex;align-items:center;gap:8px}
@@ -49,6 +50,15 @@ main{padding:6px 12px 40px}
 .upd{grid-column:1 / span 2;min-height:44px;font-size:15px;background:#eef1f5;color:var(--navy)}
 .empty{text-align:center;color:#666;padding:40px 10px;font-size:16px}
 .help{margin:20px 4px;font-size:13px;color:#555;line-height:1.45}
+#exit{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.5);border-radius:10px;font-size:14px;font-weight:700;padding:8px 10px;min-height:44px}
+.card.justcalled{outline:4px solid #F9AB00;box-shadow:0 0 0 6px rgba(249,171,0,.25)}
+#jc{display:none;position:sticky;bottom:0;z-index:6;margin:0;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:#FFF4CE;border-top:3px solid #F9AB00;font-size:15px;line-height:1.35}
+#jc .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+#jc button,#jc a{border:0;border-radius:18px;padding:9px 12px;font-size:14px;font-weight:700;background:#fff;color:#0B3C5D;text-decoration:none;min-height:40px}
+#jc .x{background:transparent;color:#6b4e00}
+.mark{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:8px;background:#FDE9B5;color:#6b4e00}
+#bye{display:none;position:fixed;inset:0;z-index:20;background:#0B3C5D;color:#fff;text-align:center;padding:30vh 24px 0;font-size:18px;line-height:1.5}
+#bye button{margin-top:22px;background:#fff;color:#0B3C5D;border:0;border-radius:14px;font-size:20px;font-weight:800;padding:16px 28px}
 </style>
 </head>
 <body>
@@ -57,15 +67,18 @@ main{padding:6px 12px 40px}
     <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAMAAAAKE/YAAAAAYFBMVEXfY2MzW3dxjaHXOTnqlpaMo7IPP2DCztYLPF3+/v7MAAAXRWXy6uuRp7ZWeI97laeoucW5x9ArVnLdVlbS2+HJ09vc4+fUKSntpqZnhZr319dFaoPniIjzxsbQFhbwtbWr1LbsAAAAIHRSTlP//////////////////////////////////////////3Fe9GAAAAShSURBVHja7dwBd6ogFABgrVyKgGipmWv9/3/5LqIF1pa2Jfdtl3PeeUbSvq7AxbUI4v+wBIQmNKEJTWhCE5rQhCY0oQlNaEITmtB/Hs1uy1fPfVYmvd7PoOcDnkFPdQdPi1+DnuQOvmF+EZr9AJotjmbfRX8b8Fybb6GZJzT7a2jmDc2eRjOPaPYkmnlFM0KjRk8XMDZfPef9TUdPFzA2Xz3vqvws+rWF0IReEF0fjgk/HgLz6JQkSa0P3uHgA/7nCYd/QzlCzfoAj0/Bx53WS6HXPWdjDPrwfUBv7qGD/pDXN60XQx+SZMc+1ptOakR8QOuYc/OQwaPLGdBgY6Lutl4MfexRw6PknCTrAX24RUP/Cfozd+PWi6HBeA7qa18578zFBvRBh3qM7ru6jvhh1Ho59M500E0n2egwmv4B6N0JXCN0PeCh3WnUesHZY3fsfvCJdaMOwtj10w4N0ay/RjutF52n6wCusu7IwRC9s0FDBz5/3T3s1osnFxPdw2Vq+zDo9WUy+WQg2q2XnPI2kCbqYze9Xczg6tB6oH095VmtF0Sfeub5esW7XmLQ6xu0m1ys1otmxPcTDL9jYGY/k46hojZoXTdCO2ncak0LJkITmtCEJjR2dOK/EJrQhCY0oQlNaEITmtCEJjShCU1oQmNCV7kSWSNlG4atlE0m1LZCjK5UJov7r1XISHF8aNUUj/4Wt1jlmNBlk077g/c0q5Cgy3bOlxBkhQHdzPzqRCq8o7fh/G98hNwvWtghfFCsM0ufaNssH51sXZM094dWzozWVeWr1WrrnAMV3dir3uyrsveF5u5E1+i6DA6ckSahIh8FWvdrX+jxvCF6dJtZpejR45OVJ/Q4o7Q9+qbkd06WftA8/iTSd9FynNQxRLrIurF1dwXSRTV3c33rCX0NXroyM68azKnMRNRcxl7bPy1T57L4QJdmEksbM+uW2UAOoYJLyROeDcpQ7B134W+eTiGkRlxdL34acZN3hLuaCiPTKoKqYu8xjQ8/W6RWjs517tjq8VemsbJGYNgnQl75XTCZsnKmCphBIKhV1YV7lbQzZ+eF0PYSRHNDyVXTyqjibVE5iXPqUun1aFtl0nNV2EtnMTd9L4G2E4ooQ5nw0JrYZLhNR4kGA9pOKHsYd7k19vY55BY5Xlb5R9vpPIW+EJZWxQr6jhIz0/cC6NwlVU4F9GHurrtxoNV4nKlxYO13EXMU6NHFFyp31kVKuJHeo0OnerGfW7NFBB18FeFGxyWgy8x6ExrdIkdniYCZuLXuunPB35CjUz3OqsrcERbbbmnk3s0gROvkoeK3shIRhBxW3CqpUvRoWDFlXfoWonsqG9+BoUS/KbhpGW4CpLz5nSpKtF5CmwyjF8/lzZ0uUjQsSWE4KjDn8vZ1saK7T1ka2d79fAAx+vNC6L+Fpo+ZCU3o16FjtGZCE/pJdIzV/PvQMVLzL0THOM2/ER2jND/cAxKj+fFumwjNE7YIxWeeshkrOvOkbW+xmadtMIzMPHVXZEzkGftP4yHP2ukbC3n29uT+wU+gcRRCE5rQhCY0oQlNaEITmtCEJjShCU3oCeUfWPVSYtwKIUAAAAAASUVORK5CYII=" alt="">
     <h1>Santos Leads<small>Santos Optical &middot; Call &amp; Text List</small></h1>
     <button id="refresh" aria-label="Refresh">&#x21bb; Refresh</button>
+    <button id="exit" aria-label="Log out / Exit">&#x23FB; Exit</button>
   </div>
   <nav class="tabs" id="tabs"></nav>
 </header>
 <div id="banner"></div>
 <div id="status">Loading&hellip;</div>
 <main id="list"></main>
+<div id="jc"></div>
+<div id="bye"><b>Logged out of Santos Leads.</b><br>Saved tab and position were cleared.<br><button id="reopen">Tap to open again</button></div>
 <div class="help">
   <b>Add to home screen:</b> Android (Chrome): &#8942; menu &rarr; <i>Add to Home screen</i>. iPhone (Safari): Share &rarr; <i>Add to Home Screen</i>.<br>
-  Clinic hours: Mon&ndash;Sat 8AM&ndash;6PM. Walk-in, first come first serve, walang limit sa pasyente. FREE reading eyeglass: 39+ only. No voucher needed &mdash; patient just shows the chat/text to the sales staff. Closed Sundays &amp; Nov 1, Nov 2, Dec 25, Jan 1, Jan 31, Holy Week.
+  Clinic hours: Mon&ndash;Sat 8AM&ndash;6PM. Walk-in, first come first serve, walang limit sa pasyente. FREE reading eyeglass: 39+ only. No voucher needed &mdash; patient just shows the chat/text to the sales staff. Closed Sundays &amp; Nov 1, Nov 2, Dec 25, Jan 1, Jan 31, Holy Week.<br>After a call or text, the app stays open on the same tab and spot. Tap <b>Exit</b> to log out.
 </div>
 <script>
 // ---- Config ----
@@ -77,9 +90,10 @@ var AUTO_REFRESH_MS = 60000;
 
 // ---- Redirect helper: lets Sheet links use https://.../?call=+63... or ?sms=+63...&body=... ----
 (function(){
-  var q = new URLSearchParams(location.search);
-  if (q.get("call")) { location.replace("tel:" + q.get("call")); }
-  else if (q.get("sms")) { location.replace("sms:" + q.get("sms") + "?&body=" + encodeURIComponent(q.get("body") || "")); }
+  var q = new URLSearchParams(location.search), t = null;
+  if (q.get("call")) t = "tel:" + q.get("call");
+  else if (q.get("sms")) t = "sms:" + q.get("sms") + "?&body=" + encodeURIComponent(q.get("body") || "");
+  if (t) { try { history.replaceState(null, "", location.pathname); } catch(e){} location.href = t; }
 })();
 
 var GROUPS = [
@@ -95,14 +109,14 @@ var GCOLOR = {}; GROUPS.forEach(function(g){ GCOLOR[g.key]=g.color; });
 
 // Demo rows (fake TEST leads) used only when the live Sheet can't be read.
 var DEMO = [
- ["L001","HOT","TEST Maria Cruz","+639170000001","Wide Progressive (Essilor)","Paso de Blas","Tue, Dec 1, 2026","New","8:30 AM","2","Valenzuela (Paso de Blas area)","Paso de Blas","Weekdays 10-11 AM","Yes","58","Yes","TEST. KITA chat: FREE reading eyeglass (58, eligible) + wants to try Essilor Wide Progressive; from Valenzuela, Paso de Blas. Asked if Wide Progressive is easy to get used to. Doc call: weekdays 10-11 AM."],
- ["L002","HOT","TEST Jose Reyes","+639170000002","Wide Progressive (Essilor)","Quiapo","Tue, Dec 1, 2026","Scheduled","Morning","3","Sampaloc, Manila","Quiapo","After 5 PM","Yes","47","Yes","TEST. FREE reading eyeglass (47, eligible) + Essilor Wide Progressive; from Sampaloc, Quiapo. Asked about price range for progressive lenses. Doc call: after 5 PM."],
- ["L004","HOT","TEST Pedro Garcia","+639170000004","Starter Progressive","SBP","Mon, Nov 30, 2026","Call Back Later","Anytime","5","Malabon (San Agustin)","SBP","After 3 PM","Yes","61","Yes","TEST. Starter Progressive P950 OFF w/ frame + FREE reading eyeglass (61, eligible); Malabon, SBP. Asked if frame choice is included. Doc call: after 3 PM."],
- ["L003","HOT","TEST Ana Santos","+639170000003","Starter Progressive","Maypajo","Mon, Nov 30, 2026","Called-No Answer","Afternoon","4","Caloocan (Maypajo)","Maypajo","Lunch, 12-1 PM","No","52","Yes","TEST. Starter Progressive P950 OFF w/ frame + FREE reading eyeglass (52, eligible); Caloocan, Maypajo. Uses old bifocals. Doc call: lunch 12-1 PM."],
- ["L005","HOT","TEST Liza Mendoza","+639170000005","PhotoBlue","Symaco","Tue, Dec 1, 2026","New","Lunch break","6","Malabon Bayan","Symaco","Morning 9-10 AM","Yes","34","No","TEST. PhotoBlue BUY 1 TAKE 3 (34, NOT eligible for free reading eyeglass - told warmly); Malabon Bayan, Symaco. Works on computer all day. Doc call: 9-10 AM."],
- ["L010","WARM","TEST Nestor Aquino","+639170000010","Free reading eyeglass","Maypajo","Mon, Nov 30, 2026","Call Back Later","Anytime","11","Caloocan","Maypajo","2-4 PM","Yes","41","Yes","TEST. FREE reading eyeglass (41, eligible); Caloocan, Maypajo. Asked if eye check is included. Doc call: 2-4 PM."],
- ["L009","WARM","TEST Rosa Bautista","+639170000009","Free reading eyeglass","Tangos","Tue, Dec 1, 2026","New","Morning","10","Tangos, Navotas","Tangos","Anytime before 6 PM","Yes","66","Yes","TEST. FREE reading eyeglass only (66, eligible); Tangos, Navotas. Asked if she can bring her husband too. Doc call: anytime before 6 PM."],
- ["L007","WARM","TEST Carmen Lopez","+639170000007","Other Essilor product","Quiapo","Mon, Nov 30, 2026","New","Evening (before 6PM)","8","Sta. Cruz, Manila","Quiapo","Saturday morning","Yes","29","No","TEST. Other Essilor - asked about anti-glare (29, NOT eligible for free reading eyeglass - told warmly); Sta. Cruz, Quiapo. Doc call: Saturday morning."]
+ ["L001","HOT","TEST Maria Cruz","+639170000001","Wide Progressive (Essilor)","Paso de Blas","Tue, Dec 1, 2026","New","8:30 AM","2","Valenzuela (Paso de Blas area)","Paso de Blas","Weekdays 10-11 AM","Yes","58","Yes","TEST. KITA chat: FREE reading eyeglass (58, eligible) + wants to try Essilor Wide Progressive; from Valenzuela, Paso de Blas. Plans to visit Sat Nov 28. Asked if Wide Progressive is easy to get used to. Doc call: weekdays 10-11 AM."],
+ ["L002","HOT","TEST Jose Reyes","+639170000002","Wide Progressive (Essilor)","Quiapo","Tue, Dec 1, 2026","Scheduled","Morning","3","Sampaloc, Manila","Quiapo","After 5 PM","Yes","47","Yes","TEST. FREE reading eyeglass (47, eligible) + Essilor Wide Progressive; from Sampaloc, Quiapo. Plans to visit Mon Nov 30. Asked about price range for progressive lenses. Doc call: after 5 PM."],
+ ["L004","HOT","TEST Pedro Garcia","+639170000004","Starter Progressive","SBP","Mon, Nov 30, 2026","Call Back Later","Anytime","5","Malabon (San Agustin)","SBP","After 3 PM","Yes","61","Yes","TEST. Starter Progressive P950 OFF w/ frame + FREE reading eyeglass (61, eligible); Malabon, SBP. Plans to visit Fri Nov 27. Asked if frame choice is included. Doc call: after 3 PM."],
+ ["L003","HOT","TEST Ana Santos","+639170000003","Starter Progressive","Maypajo","Mon, Nov 30, 2026","Called-No Answer","Afternoon","4","Caloocan (Maypajo)","Maypajo","Lunch, 12-1 PM","No","52","Yes","TEST. Starter Progressive P950 OFF w/ frame + FREE reading eyeglass (52, eligible); Caloocan, Maypajo. Planned visit day: not yet given. Uses old bifocals. Doc call: lunch 12-1 PM."],
+ ["L005","HOT","TEST Liza Mendoza","+639170000005","PhotoBlue","Symaco","Tue, Dec 1, 2026","New","Lunch break","6","Malabon Bayan","Symaco","Morning 9-10 AM","Yes","34","No","TEST. PhotoBlue BUY 1 TAKE 3 (34, NOT eligible for free reading eyeglass - told warmly); Malabon Bayan, Symaco. Plans to visit Sat Nov 28. Works on computer all day. Doc call: 9-10 AM."],
+ ["L010","WARM","TEST Nestor Aquino","+639170000010","Free reading eyeglass","Maypajo","Mon, Nov 30, 2026","Call Back Later","Anytime","11","Caloocan","Maypajo","2-4 PM","Yes","41","Yes","TEST. FREE reading eyeglass (41, eligible); Caloocan, Maypajo. Plans to visit Fri Nov 27. Asked if eye check is included. Doc call: 2-4 PM."],
+ ["L009","WARM","TEST Rosa Bautista","+639170000009","Free reading eyeglass","Tangos","Tue, Dec 1, 2026","New","Morning","10","Tangos, Navotas","Tangos","Anytime before 6 PM","Yes","66","Yes","TEST. FREE reading eyeglass only (66, eligible); Tangos, Navotas. Plans to visit Thu Nov 26. Asked if she can bring her husband too. Doc call: anytime before 6 PM."],
+ ["L007","WARM","TEST Carmen Lopez","+639170000007","Other Essilor product","Quiapo","Mon, Nov 30, 2026","New","Evening (before 6PM)","8","Sta. Cruz, Manila","Quiapo","Saturday morning","Yes","29","No","TEST. Other Essilor - asked about anti-glare (29, NOT eligible for free reading eyeglass - told warmly); Sta. Cruz, Quiapo. Plans to visit Sat Nov 28. Doc call: Saturday morning."]
 ];
 var TEMPLATES = {
  "Wide Progressive (Essilor)": "Hi {Name}! Santos Optical {Branch}: FREE reading eyeglass (39+) + Essilor Wide Progressive. Anytime po this week. Wait po namin kayo. Kailan po ba kayo makakapunta? Until {Deadline}, Mon-Sat 8AM-6PM, walk-in, first come first serve, walang limit sa pasyente. Ipakita po ito sa staff. Malapit po ba kayo dito? Kailan po pwede tumawag si Doc Bien Santos? CALL US or comment KITA. Reply STOP to opt out.",
@@ -112,7 +126,16 @@ var TEMPLATES = {
  "Other Essilor product": "Hi {Name}! Santos Optical {Branch}: FREE reading eyeglass (39+) + Essilor lens check. Anytime po this week. Wait po namin kayo. Kailan po ba kayo makakapunta? Until {Deadline}, Mon-Sat 8AM-6PM, walk-in, first come first serve, walang limit sa pasyente. Ipakita po ito sa staff. Malapit po ba kayo dito? Kailan po pwede tumawag si Doc Bien Santos? CALL US or comment KITA. Reply STOP to opt out."
 };
 
-var leads = [], current = "HOT", usingDemo = false;
+var leads = [], current = "HOT", usingDemo = false, lastErr = "", lastLoad = 0, loading = false;
+// ---- Saved view state (stays until Exit) ----
+var SKEY = "santosLeads.state.v1";
+function getState(){ try { return JSON.parse(localStorage.getItem(SKEY)) || {}; } catch(e){ return {}; } }
+function setState(p){ var st=getState(); for (var k in p) st[k]=p[k]; try { localStorage.setItem(SKEY, JSON.stringify(st)); } catch(e){} return st; }
+(function(){ var st=getState(); if (st.tab && GROUPS.some(function(g){return g.key===st.tab;})) current=st.tab; })();
+var scrollTimer=null;
+window.addEventListener("scroll",function(){ clearTimeout(scrollTimer); scrollTimer=setTimeout(function(){ if (document.getElementById("bye").style.display==="block") return; var o={}; o["scroll_"+current]=window.scrollY; setState(o); },150); },{passive:true});
+function saveNow(){ var o={tab:current}; o["scroll_"+current]=window.scrollY; setState(o); }
+function restoreScroll(){ var y=getState()["scroll_"+current]; if (typeof y==="number") window.scrollTo(0,y); }
 
 function parseCSV(text){
   var rows=[],row=[],f="",q=false;
@@ -136,8 +159,9 @@ function fromRow(r,idx){
   if (!l.msg) l.msg=fill(TEMPLATES[l.group],l);
   return l;
 }
-function load(){
-  document.getElementById("status").textContent="Loading\u2026";
+function load(quiet){
+  if (loading) return; loading=true;
+  if (!quiet || !leads.length) document.getElementById("status").textContent="Loading\u2026";
   fetch(CSV_URL+"&_="+Date.now(),{cache:"no-store"}).then(function(r){
     if(!r.ok) throw new Error("HTTP "+r.status);
     return r.text();
@@ -146,14 +170,16 @@ function load(){
     var rows=parseCSV(t); var head=rows.shift()||[]; var idx={};
     head.forEach(function(h,i){ idx[h.trim()]=i; });
     leads=rows.filter(function(r){return r.join("").trim()!=="";}).map(function(r){return fromRow(r,idx);}).filter(function(l){return l.name;});
-    usingDemo=false; render();
+    usingDemo=false; lastErr=""; keepView(render);
   }).catch(function(e){
-    leads=DEMO.map(function(r){return fromRow(r,{});}); usingDemo=true; render(String(e.message||e));
-  });
+    leads=DEMO.map(function(r){return fromRow(r,{});}); usingDemo=true; lastErr=String(e.message||e); keepView(render);
+  }).then(function(){ loading=false; lastLoad=Date.now(); });
 }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
 function inTab(l,key){ var g=GROUPS.filter(function(x){return x.key===key;})[0]; return g&&g.test? g.test(l) : l.group===key; }
+function keepView(fn){ var first=!lastLoad, y=window.scrollY; fn(); if (first) restoreScroll(); else window.scrollTo(0,y); showJustCalled(); }
 function render(err){
+  err = err || lastErr;
   var b=document.getElementById("banner");
   if (usingDemo){ b.style.display="block"; b.innerHTML="<b>Demo mode:</b> showing sample TEST leads because the live Sheet can\u2019t be read yet ("+esc(err)+"). The Sheet owner must set Share \u2192 General access \u2192 <i>Anyone with the link: Viewer</i> for live data."; }
   else b.style.display="none";
@@ -162,29 +188,71 @@ function render(err){
     var n=leads.filter(function(l){return inTab(l,g.key);}).length;
     return '<button class="tab'+(g.key===current?' on':'')+'" data-k="'+esc(g.key)+'">'+esc(g.label)+'<span class="n">'+n+'</span></button>';
   }).join("");
-  Array.prototype.forEach.call(tabs.querySelectorAll(".tab"),function(el){ el.onclick=function(){ current=el.getAttribute("data-k"); render(err); window.scrollTo(0,0); }; });
+  Array.prototype.forEach.call(tabs.querySelectorAll(".tab"),function(el){ el.onclick=function(){ saveNow(); current=el.getAttribute("data-k"); setState({tab:current}); render(); restoreScroll(); if (window.scrollY===0) window.scrollTo(0,0); showJustCalled(); }; });
   var list=leads.filter(function(l){return inTab(l,current);});
   document.getElementById("list").innerHTML = list.length? list.map(function(l){
     var col=GCOLOR[l.group]||"#999";
     var sms="sms:"+l.phone+"?&body="+encodeURIComponent(l.msg);
     var upd=EDIT_URL+"#gid="+LEADS_GID+(l.row? "&range=A"+l.row+":V"+l.row : "");
-    return '<div class="card" style="border-left-color:'+col+'"><div class="body">'+
+    var st=getState(), mk=(st.marks||{})[l.id];
+    return '<div class="card'+(st.last&&st.last.id===l.id?' justcalled':'')+'" id="lead-'+esc(l.id)+'" style="border-left-color:'+col+'"><div class="body">'+
       '<div class="row1"><div class="name">'+esc(l.name)+'</div><span class="badge '+esc(l.priority)+'">'+esc(l.priority)+'</span></div>'+
       '<div class="grp" style="color:'+col+'">'+esc(l.group)+'</div>'+
       '<div class="meta">\uD83D\uDCCD <b>'+esc(l.branch)+'</b> &nbsp; \u23F3 until <b>'+esc(l.deadline)+'</b><br>'+
       '\uD83C\uDFE0 Location: <b>'+esc(l.loc||'\u2014 itanong po')+'</b>'+(l.nearest&&l.nearest!==l.branch? ' (nearest: '+esc(l.nearest)+')':'')+'<br>'+
       '\uD83C\uDF82 Age: <b>'+esc(l.age||'\u2014 itanong po')+'</b>'+(l.elig==='Yes'? ' <span class="st" style="background:#D9EAD3;color:#1E6B2E">\u2713 39+ FREE reading eyeglass</span>' : (l.elig==='No'? ' <span class="st" style="background:#FCE8B2;color:#7A4B00">under 39 \u2013 no free eyeglass</span>':''))+'<br>'+'\uD83D\uDC68\u200D\u2695\uFE0F Doc\u2019s call: <b>'+esc(l.docTime||'\u2014 itanong po')+'</b><br>'+
-      (l.summary? '\uD83D\uDCDD <i>'+esc(l.summary)+'</i><br>':'')+'<span class="st">'+esc(l.status)+'</span>'+(/^y/i.test(l.kita||'')? ' <span class="st" style="background:#FDE2E1;color:#B00">KITA</span>':'')+(l.pref? ' &nbsp; \uD83D\uDD52 '+esc(l.pref):'')+' &nbsp; <span style="color:#777">'+esc(l.phone)+'</span></div></div>'+
-      '<div class="btns"><a class="btn call" href="tel:'+esc(l.phone)+'">\uD83D\uDCDE Call</a>'+
-      '<a class="btn text" href="'+esc(sms)+'">\uD83D\uDCAC Text</a>'+
+      (l.summary? '\uD83D\uDCDD <i>'+esc(l.summary)+'</i><br>':'')+'<span class="st">'+esc(l.status)+'</span>'+(mk? ' <span class="mark">\u270D '+esc(mk)+' (update Sheet)</span>':'')+(/^y/i.test(l.kita||'')? ' <span class="st" style="background:#FDE2E1;color:#B00">KITA</span>':'')+(l.pref? ' &nbsp; \uD83D\uDD52 '+esc(l.pref):'')+' &nbsp; <span style="color:#777">'+esc(l.phone)+'</span></div></div>'+
+      '<div class="btns"><a class="btn call" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row)+'">\uD83D\uDCDE Call</a>'+
+      '<a class="btn text" href="'+esc(sms)+'" data-act="text" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row)+'">\uD83D\uDCAC Text</a>'+
       '<a class="btn upd" href="'+esc(upd)+'" target="_blank" rel="noopener">\u270F\uFE0F Update status in Sheet</a></div></div>';
   }).join("") : '<div class="empty">No leads to call in this group \uD83C\uDF89</div>';
   var now=new Date().toLocaleTimeString("en-PH",{timeZone:"Asia/Manila",hour:"numeric",minute:"2-digit"});
-  document.getElementById("status").textContent=(usingDemo?"Demo data":"Live from Sheet")+" \u00B7 "+leads.length+" to call \u00B7 updated "+now+" (Manila) \u00B7 auto-refresh every 1 min";
+  document.getElementById("status").textContent=(usingDemo?"Demo data":"Live from Sheet")+" \u00B7 "+leads.length+" to call \u00B7 updated "+now+" (Manila) \u00B7 quiet auto-refresh every 1 min";
 }
-document.getElementById("refresh").onclick=load;
-document.addEventListener("visibilitychange",function(){ if(!document.hidden) load(); });
-setInterval(function(){ if(!document.hidden) load(); }, AUTO_REFRESH_MS);
+// ---- Call / Text: hand off to the dialer without leaving the app ----
+function openExternal(url){ var a=document.createElement("a"); a.href=url; a.style.display="none"; document.body.appendChild(a); a.click(); setTimeout(function(){ a.remove(); },500); }
+document.getElementById("list").addEventListener("click",function(ev){
+  var a=ev.target.closest && ev.target.closest("a[data-act]"); if (!a) return;
+  ev.preventDefault();
+  saveNow();
+  setState({last:{id:a.getAttribute("data-id"),name:a.getAttribute("data-name"),row:a.getAttribute("data-row"),act:a.getAttribute("data-act"),at:Date.now()}});
+  Array.prototype.forEach.call(document.querySelectorAll(".card.justcalled"),function(c){c.classList.remove("justcalled");});
+  var card=document.getElementById("lead-"+a.getAttribute("data-id")); if (card) card.classList.add("justcalled");
+  showJustCalled();
+  window.__lastHandoff=a.getAttribute("href");
+  openExternal(a.getAttribute("href"));
+});
+function showJustCalled(){
+  var box=document.getElementById("jc"), st=getState(), l=st.last;
+  if (!l || !leads.some(function(x){return x.id===l.id;})) { box.style.display="none"; document.body.classList.remove("hasjc"); return; }
+  document.body.classList.add("hasjc");
+  var upd=EDIT_URL+"#gid="+LEADS_GID+(l.row? "&range=A"+l.row+":Y"+l.row : "");
+  box.innerHTML='<b>'+(l.act==="text"?"\uD83D\uDCAC Just texted":"\uD83D\uDCDE Just called")+': '+esc(l.name)+'</b> \u2014 mark status:'+
+    '<div class="chips">'+["Answered","No answer","Call back later","Coming in","Not interested"].map(function(m){return '<button data-m="'+m+'">'+m+'</button>';}).join("")+
+    '<a href="'+esc(upd)+'" target="_blank" rel="noopener">\u270F\uFE0F Sheet</a><button class="x" data-m="">\u2715 Dismiss</button></div>';
+  box.style.display="block";
+  Array.prototype.forEach.call(box.querySelectorAll("button"),function(b){ b.onclick=function(){
+    var m=b.getAttribute("data-m"), s2=getState(), marks=s2.marks||{};
+    if (m) marks[l.id]=m;
+    setState({marks:marks,last:null}); var y=window.scrollY; render(); window.scrollTo(0,y); box.style.display="none"; document.body.classList.remove("hasjc");
+  }; });
+}
+// ---- Return from dialer / app switch: restore, never reload ----
+function onReturn(){ if (document.hidden) return; var st=getState(); if (st.tab && st.tab!==current){ current=st.tab; render(); restoreScroll(); } showJustCalled(); if (Date.now()-lastLoad>30000) load(true); }
+document.addEventListener("visibilitychange",function(){ if (document.hidden) saveNow(); else onReturn(); });
+window.addEventListener("pagehide",saveNow);
+window.addEventListener("pageshow",function(e){ if (e.persisted) { restoreScroll(); onReturn(); } });
+document.getElementById("refresh").onclick=function(){ load(true); };
+setInterval(function(){ if(!document.hidden) load(true); }, AUTO_REFRESH_MS);
+// ---- Exit / log out ----
+document.getElementById("exit").onclick=function(){
+  if (!confirm("Log out of Santos Leads? Saved tab, position and marks will be cleared.")) return;
+  try { localStorage.removeItem(SKEY); sessionStorage.clear(); } catch(e){}
+  clearTimeout(scrollTimer); current="HOT"; document.getElementById("bye").style.display="block"; document.getElementById("jc").style.display="none"; window.scrollTo(0,0);
+};
+document.getElementById("reopen").onclick=function(){ document.getElementById("bye").style.display="none"; render(); window.scrollTo(0,0); load(true); };
+if ("scrollRestoration" in history) history.scrollRestoration="manual";
+if ("serviceWorker" in navigator) { window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js",{scope:"./"}).catch(function(){}); }); }
 load();
 </script>
 </body>
