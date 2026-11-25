@@ -85,6 +85,25 @@ details.hist ol{margin:4px 0 0 18px;padding:0;line-height:1.5}
 #modal .row{display:flex;gap:10px;margin-top:8px}
 #modal .row button{flex:1;min-height:50px;border:0;border-radius:12px;font-size:17px;font-weight:800}
 #modal .ok{background:#B3261E;color:#fff}#modal .ok.green{background:#1E8E3E}#modal .no{background:#eef1f5;color:#0B3C5D}
+
+/*CALL-NOTIFY-PATCH*/
+#iambar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 12px 0;font-size:14px}
+#iambar label{color:#0B3C5D;font-weight:700}
+#iambar select{font-size:15px;padding:7px 10px;border-radius:10px;border:1px solid #c7cdd6;min-height:40px;background:#fff;max-width:100%}
+#iambar button{border:1px solid #c7cdd6;background:#fff;color:#0B3C5D;border-radius:18px;padding:7px 12px;font-size:13px;font-weight:700;min-height:36px}
+#iambar button.on{background:#0B3C5D;color:#fff;border-color:#0B3C5D}
+#newbadge{background:#CC0000;color:#fff;border-radius:14px;padding:6px 10px;font-size:13px;font-weight:800;border:0;min-height:36px}
+#callnow{display:none;margin:10px 12px 0;padding:12px;border-radius:12px;background:#CC0000;color:#fff;font-size:15px;line-height:1.4}
+#callnow b.ttl{display:block;font-size:17px;margin-bottom:6px}
+#callnow .cn{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border-radius:10px;padding:8px 10px;margin-top:6px;color:#fff;text-decoration:none}
+#callnow .cn .nm{font-weight:800;flex:1}
+#callnow .cdown{font-weight:800;background:#fff;color:#CC0000;border-radius:8px;padding:3px 8px;font-size:12px;white-space:nowrap}
+#callnow .cncall{background:#fff;color:#1E8E3E;border-radius:10px;padding:8px 10px;font-weight:800;text-decoration:none;font-size:15px}
+.card.due{outline:3px solid #CC0000;box-shadow:0 0 0 4px rgba(204,0,0,.18)}
+.card.soon{outline:3px solid #E69121}
+.duepill{display:inline-block;margin-top:6px;font-size:13px;font-weight:800;border-radius:8px;padding:3px 8px;background:#FCE8E6;color:#B3261E}
+.duepill.soon{background:#FCE8B2;color:#7A4B00}
+.duepill.late{background:#B3261E;color:#fff}
 </style>
 </head>
 <body>
@@ -98,6 +117,8 @@ details.hist ol{margin:4px 0 0 18px;padding:0;line-height:1.5}
   <nav class="tabs" id="tabs"></nav>
 </header>
 <div id="banner"></div>
+<div id="iambar"></div>
+<div id="callnow"></div>
 <div id="status">Loading&hellip;</div>
 <div id="tools"></div>
 <main id="list"></main>
@@ -237,10 +258,10 @@ function load(quiet){
       leads=rows.filter(function(r){return r.join("").trim()!=="";}).map(function(r){return fromRow(r,idx);}).filter(function(l){return l.name;});
       setLog([]); dataSource="Live from Sheet"; usingDemo=false; lastErr="";
     });
-  p.then(function(){ liveOk=true; if (!DEMO_ON) leads=leads.filter(function(l){ return !isTestLead(l); }); keepView(render); }).catch(function(e){
+  p.then(function(){ liveOk=true; if (!DEMO_ON) leads=leads.filter(function(l){ return !isTestLead(l); }); announceNew(detectNew(leads)); keepView(render); }).catch(function(e){
     lastErr=String(e.message||e);
     if (DEMO_ON){ leads=DEMO.map(function(r){return fromRow(r,{});}); setLog(DEMO_LOG); usingDemo=true; dataSource="Demo data (TEST)"; }
-    else if (!liveOk){ leads=[]; setLog([]); usingDemo=false; dataSource="\u26A0\uFE0F Live leads not loaded"; } keepView(render);
+    else if (!liveOk){ leads=[]; setLog([]); usingDemo=false; dataSource="\u26A0\uFE0F Live leads not loaded"; } if (leads.length) announceNew(detectNew(leads)); keepView(render);
   }).then(function(){ loading=false; lastLoad=Date.now(); syncQueue(); });
 }
 // ---- Call log (local first, synced to the Sheet's Call Log via the web app) ----
@@ -301,6 +322,17 @@ function renderTools(){
   var sn=document.getElementById("syncnow"); if (sn) sn.onclick=function(){ if (apiCfg()) syncQueue(); else openSetup(); };
   document.getElementById("export").onclick=exportLog;
   document.getElementById("setup").onclick=openSetup;
+  var bar=document.getElementById("iambar"); if (bar){
+    var who=iAm(), mine=showMine();
+    bar.innerHTML='<label>I am <select id="iamwho"><option value="">\u2014 Choose who you are \u2014</option>'+CALLERS.map(function(x){return '<option'+(x===who?' selected':'')+' value="'+esc(x)+'">'+esc(x)+'</option>';}).join("")+'</select></label>'
+      +'<button id="showmine" class="'+(mine?'on':'')+'">'+(mine?'My assigned leads':'All leads')+'</button>'
+      +(lastNew.length? '<button id="newbadge" type="button">'+lastNew.length+' new since last visit</button>':'')
+      +(typeof Notification!=="undefined" && Notification.permission==="default"? '<button id="enablenote">Enable call alerts</button>': (canNotify()? '<span style="color:#1E6B2E;font-weight:700;font-size:12px">Alerts on</span>':''));
+    document.getElementById("iamwho").onchange=function(){ localStorage.setItem(CKEY,this.value); if (this.value) askNotifyOnce(); render(); renderTools(); };
+    document.getElementById("showmine").onclick=function(){ try{ localStorage.setItem(FILTERKEY, mine?"all":"mine"); }catch(e){} render(); renderTools(); };
+    var nb=document.getElementById("newbadge"); if (nb) nb.onclick=function(){ markSeen(); renderTools(); };
+    var en=document.getElementById("enablenote"); if (en) en.onclick=function(){ unlockAudio(); askNotifyOnce(); };
+  }
 }
 function csvCell(v){ v=String(v==null?"":v); return /[",\n]/.test(v)? '"'+v.replace(/"/g,'""')+'"' : v; }
 function exportLog(){
@@ -358,6 +390,38 @@ function histHtml(l){
 function visitHtml(l){ if (l.visited==="Yes") return '<div class="when" style="background:#D9EAD3;color:#1E6B2E;font-weight:700">\u2705 Visited (auto-matched) \u2014 confirm &amp; remove'+(l.visitDate? '<br><span style="font-weight:400">'+esc(l.visitDate)+(l.visitBranch? ' \u00B7 '+esc(l.visitBranch):'')+(l.joAmount!==''&&l.joAmount!=null&&l.joAmount!=='0'? ' \u00B7 \u20B1'+esc(l.joAmount):'')+(l.matchBasis? ' \u00B7 '+esc(l.matchBasis):'')+'</span>':'')+'</div>';
   if (l.visited==="Needs review") return '<div class="when" style="background:#FCE8B2;color:#7A4B00;font-weight:700">\uD83D\uDD0E Possible walk-in \u2014 Doc please confirm in the Sheet (Visited = Yes or No)<br><span style="font-weight:400">'+esc(l.matchBasis||'')+'</span></div>';
   return ''; }
+
+/*CALL-NOTIFY-PATCH*/
+var SEENKEY="santosLeads.seen.v1", FIREKEY="santosLeads.notifyFired.v1", NPERMKEY="santosLeads.notifyAsked.v1", FILTERKEY="santosLeads.showMine.v1";
+var lastNew=[], announcedNew={}, _ac=null, dueTimer=null;
+function manilaNowDate(){ var q=null; try{ q=new URLSearchParams(location.search).get("now"); }catch(e){} if (q){ var d=new Date(q); if (!isNaN(d.getTime())) return d; } return new Date(); }
+function assignedCaller(l){ if ((l.ctype||"")==="Specific time") return "Doc Bien"; var b=(l.branch||l.nearest||"").trim(); var map={"Paso de Blas":"Paso de Blas staff","Maypajo":"Maypajo staff","Quiapo":"Quiapo staff","Symaco":"Symaco staff","SBP":"SBP staff","Tangos":"Tangos staff"}; return map[b]||"Central caller"; }
+function iAm(){ try{ return localStorage.getItem(CKEY)||""; }catch(e){ return ""; } }
+function showMine(){ try{ return (localStorage.getItem(FILTERKEY)||"mine")!=="all"; }catch(e){ return true; } }
+function isMine(l){ var who=iAm(); if (!who || !showMine()) return true; return assignedCaller(l)===who; }
+function parseSlot(slot){ var t=String(slot||"").replace(/📅/g," ").replace(/\s+/g," ").trim(); var m=t.match(/([A-Z][a-z]{2})\s+(\d{1,2}),(?:\s+(\d{4}),?)?\s+(\d{1,2}):(\d{2})\s*([AP]M)/i); if (!m) return 0; var MON={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11}; var mon=MON[m[1].slice(0,3)]; if (mon==null) return 0; var now=manilaNowDate(); var yr=m[3]? +m[3] : +new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Manila",year:"numeric"}).format(now); var h=+m[4], mi=+m[5], ap=m[6].toUpperCase(); if (ap==="PM"&&h<12) h+=12; if (ap==="AM"&&h===12) h=0; return Date.UTC(yr, mon, +m[2], h-8, mi); }
+function manilaDayKey(ms){ var d=new Date(ms+8*3600e3); return d.getUTCFullYear()+"-"+("0"+(d.getUTCMonth()+1)).slice(-2)+"-"+("0"+d.getUTCDate()).slice(-2); }
+function nowDayKey(){ var f=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Manila",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(manilaNowDate()), o={}; f.forEach(function(x){o[x.type]=x.value;}); return o.year+"-"+o.month+"-"+o.day; }
+function calledToday(l){ var ms=parseTs(l.lastCalled)||0; extras(l.id).filter(isCall).forEach(function(e){ if (e.ms>ms) ms=e.ms; }); return ms? manilaDayKey(ms)===nowDayKey() : false; }
+function fmtMins(mins){ if (mins>=60){ var h=Math.floor(mins/60), m=mins%60; return m? (h+" hr "+m+" min") : (h+" hr"); } return Math.abs(mins)+" min"; }
+function dueInfo(l){ if (l.removed || l.visited==="Yes") return null; var start=parseSlot(l.slot); if (!start) return null; var end=start+15*60*1000, now=manilaNowDate().getTime(), mins=Math.round((start-now)/60000); if (calledToday(l)) return {state:"called", mins:mins, start:start, label:"Called today"}; if (now < start-15*60*1000) return {state:"later", mins:mins, start:start, label:"due in "+fmtMins(mins)}; if (now <= end) return {state:(mins>0?"soon":"due"), mins:mins, start:start, label: mins>0? ("due in "+mins+" min") : "DUE NOW"}; return {state:"late", mins:mins, start:start, label:"LATE · "+fmtMins(-mins)+" ago"}; }
+function dueActive(d){ return d && (d.state==="soon" || d.state==="due" || d.state==="late"); }
+function unlockAudio(){ try{ if (!_ac) _ac=new (window.AudioContext||window.webkitAudioContext)(); if (_ac.state==="suspended") _ac.resume(); }catch(e){} }
+function playChime(){ unlockAudio(); if (!_ac) return; var t=_ac.currentTime; [880,1174].forEach(function(freq,i){ var o=_ac.createOscillator(), g=_ac.createGain(); o.type="sine"; o.frequency.value=freq; g.gain.setValueAtTime(0.0001,t+i*0.12); g.gain.exponentialRampToValueAtTime(0.15,t+i*0.12+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+i*0.12+0.2); o.connect(g); g.connect(_ac.destination); o.start(t+i*0.12); o.stop(t+i*0.12+0.22); }); }
+function canNotify(){ return typeof Notification!=="undefined" && Notification.permission==="granted"; }
+function askNotifyOnce(){ if (typeof Notification==="undefined") return; if (Notification.permission!=="default") return; if (localStorage.getItem(NPERMKEY)==="no") return; Notification.requestPermission().then(function(p){ try{ localStorage.setItem(NPERMKEY, p==="denied"?"no":"asked"); }catch(e){} renderTools(); }); }
+function fireNote(title, body, tag){ playChime(); if (!canNotify()) return; try{ new Notification(title, {body:body||"", tag:tag||"santos-leads", requireInteraction:false}); }catch(e){} }
+function firedSet(){ try{ return JSON.parse(localStorage.getItem(FIREKEY)||"{}"); }catch(e){ return {}; } }
+function hasFired(k){ return !!firedSet()[k]; }
+function markFired(k){ var o=firedSet(); o[k]=Date.now(); var cut=Date.now()-7*86400e3, keep={}; Object.keys(o).forEach(function(x){ if (o[x]>cut) keep[x]=o[x]; }); try{ localStorage.setItem(FIREKEY, JSON.stringify(keep)); }catch(e){} }
+function detectNew(arr){ var who=iAm(); var mine=(arr||[]).filter(function(l){ return !l.removed && (!who || assignedCaller(l)===who); }); var ids=mine.map(function(l){return l.id;}); var seen=null; try{ seen=JSON.parse(localStorage.getItem(SEENKEY)||"null"); }catch(e){} if (!seen || !seen.ids){ try{ localStorage.setItem(SEENKEY, JSON.stringify({ids:ids, at:Date.now()})); }catch(e){} return []; } var prev={}; seen.ids.forEach(function(id){ prev[id]=1; }); return mine.filter(function(l){ return !prev[l.id]; }); }
+function markSeen(){ var who=iAm(); var ids=leads.filter(function(l){ return !l.removed && (!who || assignedCaller(l)===who); }).map(function(l){return l.id;}); var prev={}; try{ (JSON.parse(localStorage.getItem(SEENKEY)||"{\"ids\":[]}").ids||[]).forEach(function(id){ prev[id]=1; }); }catch(e){} ids.forEach(function(id){ prev[id]=1; }); try{ localStorage.setItem(SEENKEY, JSON.stringify({ids:Object.keys(prev), at:Date.now()})); }catch(e){} lastNew=[]; }
+function announceNew(neu){ var fresh=neu.filter(function(l){ return !announcedNew[l.id]; }); fresh.forEach(function(l){ announcedNew[l.id]=1; }); lastNew=neu; if (fresh.length) fireNote(fresh.length+" new lead"+(fresh.length>1?"s":"")+" to call", fresh.map(function(l){ return l.name+" ("+assignedCaller(l)+")"; }).join(", "), "new-leads"); }
+function jumpToLead(){ var id=null; try{ id=new URLSearchParams(location.search).get("lead"); }catch(e){} if (!id && location.hash){ var m=location.hash.match(/lead-?([A-Za-z0-9]+)/i); if (m) id=m[1]; } if (!id) return; var el=document.getElementById("lead-"+id); if (el){ el.scrollIntoView({block:"center"}); el.classList.add("justcalled"); } }
+function paintCallNow(){ var box=document.getElementById("callnow"); if (!box) return; var items=leads.filter(function(l){ var d=dueInfo(l); return dueActive(d) && isMine(l); }); if (!items.length){ box.style.display="none"; box.innerHTML=""; return; } items.sort(function(a,b){ return (dueInfo(a).mins)-(dueInfo(b).mins); }); box.style.display="block"; box.innerHTML='<b class="ttl">\uD83D\uDD14 Call now \u00B7 '+items.length+' lead'+(items.length>1?'s':'')+' at or near their preferred time</b>'+items.map(function(l){ var d=dueInfo(l); return '<div class="cn"><span class="cdown">'+esc(d.label)+'</span><span class="nm">'+esc(l.name)+' <small style="font-weight:500;opacity:.9">\u00B7 '+(l.ctype==="Specific time"?"Doc Bien":esc(assignedCaller(l)))+' \u00B7 '+esc(l.group)+'</small></span>'+(l.phone? '<a class="cncall" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'">\uD83D\uDCDE Call</a>':'')+'</div>'; }).join(""); }
+function tickDue(){ if (document.getElementById("bye") && document.getElementById("bye").style.display==="block") return; leads.forEach(function(l){ if (!isMine(l)) return; var d=dueInfo(l); if (!dueActive(d)) return; var key=l.id+"@"+d.start; if (d.mins<=0 && d.mins>=-1 && !hasFired(key+"@start")){ markFired(key+"@start"); fireNote("Call now: "+l.name, (l.ctype==="Specific time"?"Preferred call time is now":"Call slot is now")+" \u00B7 "+(l.phone||""), "slot-"+l.id); } else if (d.state==="soon" && !hasFired(key+"@soon")){ markFired(key+"@soon"); fireNote("Call in "+d.mins+" min: "+l.name, assignedCaller(l)+" \u00B7 "+(l.phone||"")+" \u00B7 open Santos Leads to call", "soon-"+l.id); } }); paintCallNow(); var pills=document.querySelectorAll("[data-duepill]"); Array.prototype.forEach.call(pills,function(el){ var l=findLead(el.getAttribute("data-duepill")); var d=l&&dueInfo(l); if (d&&dueActive(d)) el.textContent=d.label; }); }
+function dueHtml(l){ var d=dueInfo(l); if (!dueActive(d)) return ""; return '<div class="duepill '+(d.state==="late"?"late":(d.state==="soon"?"soon":""))+'" data-duepill="'+esc(l.id)+'">\uD83D\uDD14 '+esc(d.label)+'</div>'; }
+document.addEventListener("pointerdown", unlockAudio, {passive:true});
 function render(err){
   err = err || lastErr; applyLocal();
   var b=document.getElementById("banner");
@@ -366,29 +430,32 @@ function render(err){
   else b.style.display="none";
   var tabs=document.getElementById("tabs");
   tabs.innerHTML=GROUPS.map(function(g){
-    var n=leads.filter(function(l){return inTab(l,g.key);}).length;
+    var n=leads.filter(function(l){return inTab(l,g.key)&&isMine(l);}).length;
     return '<button class="tab'+(g.key===current?' on':'')+'" data-k="'+esc(g.key)+'">'+esc(g.label)+'<span class="n">'+n+'</span></button>';
   }).join("");
   Array.prototype.forEach.call(tabs.querySelectorAll(".tab"),function(el){ el.onclick=function(){ saveNow(); current=el.getAttribute("data-k"); setState({tab:current}); render(); restoreScroll(); if (window.scrollY===0) window.scrollTo(0,0); showJustCalled(); }; });
-  var list=leads.map(function(l,i){l._i=i;return l;}).filter(function(l){return inTab(l,current);});
+  var list=leads.map(function(l,i){l._i=i;return l;}).filter(function(l){return inTab(l,current)&&isMine(l);});
   list.forEach(function(l){ l._ci=callInfo(l); l._score=Math.max(0,l.score-15*l._ci.missedLocal); });
   function vrank(l){ return l.visited==="Yes"?2:(l.visited==="Needs review"?1:0); }
-  list.sort(function(a,b){ return (vrank(a)-vrank(b)) || ((a.ctype==="Specific time"?0:1)-(b.ctype==="Specific time"?0:1)) || ((a.priority==="HOT"?0:1)-(b.priority==="HOT"?0:1)) || (b._score-a._score) || (a._i-b._i); });
+  function drank(l){ var d=dueInfo(l); return dueActive(d)?0:1; }
+  list.sort(function(a,b){ return (drank(a)-drank(b)) || (vrank(a)-vrank(b)) || ((a.ctype==="Specific time"?0:1)-(b.ctype==="Specific time"?0:1)) || ((a.priority==="HOT"?0:1)-(b.priority==="HOT"?0:1)) || (b._score-a._score) || (a._i-b._i); });
   var lastType=null;
   document.getElementById("list").innerHTML = list.length? list.map(function(l){
+    var dnow=dueInfo(l), dueOn=dueActive(dnow);
     var col=GCOLOR[l.group]||"#999";
     var sms="sms:"+l.phone+"?&body="+encodeURIComponent(l.msg);
     var upd=EDIT_URL+"#gid="+LEADS_GID+(l.row? "&range=A"+l.row+":AM"+l.row : "");
     var st=getState(), ci=l._ci;
     var head="";
-    var vk=vrank(l)+"|"+(vrank(l)?"":l.ctype);
-    if (vk!==lastType && vrank(l) && current!=="REMOVED"){ lastType=vk; head = vrank(l)===2? '<div class="sec" style="color:#1E6B2E">\u2705 Visited (auto-matched) \u2014 confirm &amp; remove</div>' : '<div class="sec" style="color:#7A4B00">\uD83D\uDD0E Possible walk-in \u2014 Doc please confirm</div>'; }
+    var vk=(dueOn?"DUE|":"")+vrank(l)+"|"+(vrank(l)?"":l.ctype);
+    if (vk!==lastType && dueOn && current!=="REMOVED"){ lastType=vk; head = '<div class="sec" style="color:#CC0000">\uD83D\uDD14 Call now \u2014 preferred / slot time</div>'; }
+    else if (vk!==lastType && vrank(l) && current!=="REMOVED"){ lastType=vk; head = vrank(l)===2? '<div class="sec" style="color:#1E6B2E">\u2705 Visited (auto-matched) \u2014 confirm &amp; remove</div>' : '<div class="sec" style="color:#7A4B00">\uD83D\uDD0E Possible walk-in \u2014 Doc please confirm</div>'; }
     else if (vk!==lastType){ lastType=vk; head = current==="REMOVED"? '<div class="sec">\uD83D\uDDD1 Removed from the call list (full history kept \u2014 tap Restore to bring back)</div>' : l.ctype==="Specific time"? '<div class="sec">\uD83D\uDCCC Call at their chosen time (Doc Bien personal call)</div>' : '<div class="sec">\uD83D\uDD52 Open slots \u2014 HOT/WARM, then score, then oldest</div>'; }
     var when = l.ctype==="Specific time"
       ? '<div class="when pin">\uD83D\uDC68\u200D\u2695\uFE0F Call at: <b>'+esc(l.docTime||l.pref)+'</b>'+(l.slot? ' &middot; '+esc(l.slot):'')+'</div>'
       : '<div class="when">\uD83D\uDD52 Open slot'+(l.slot? ' &middot; <b>'+esc(l.slot)+'</b>':'')+'</div>';
-    return head+'<div class="card'+(st.last&&st.last.id===l.id?' justcalled':'')+(l.removed?' removed':'')+'" id="lead-'+esc(l.id)+'" style="border-left-color:'+col+'"><div class="body">'+
-      '<div class="row1"><div class="name">'+esc(l.name)+'</div><span class="score">\u2B50 '+esc(l._score)+'</span><span class="badge '+esc(l.priority)+'">'+esc(l.priority)+'</span></div>'+visitHtml(l)+(l.removed? '<div class="when"><span class="rmtag">REMOVED</span> '+esc(l.localRm==="remove"?"Removed on this phone (syncing)":l.status)+'</div>' : when)+
+    return head+'<div class="card'+(st.last&&st.last.id===l.id?' justcalled':'')+(l.removed?' removed':'')+(dueOn?(dnow.state==='late'||dnow.state==='due'?' due':' soon'):'')+'" id="lead-'+esc(l.id)+'" style="border-left-color:'+col+'"><div class="body">'+
+      '<div class="row1"><div class="name">'+esc(l.name)+'</div><span class="score">\u2B50 '+esc(l._score)+'</span><span class="badge '+esc(l.priority)+'">'+esc(l.priority)+'</span></div>'+visitHtml(l)+dueHtml(l)+(l.removed? '<div class="when"><span class="rmtag">REMOVED</span> '+esc(l.localRm==="remove"?"Removed on this phone (syncing)":l.status)+'</div>' : when)+
       (ci.count? '<div class="calls">\uD83D\uDCDE '+ci.count+' call'+(ci.count>1?'s':'')+(ci.when? ' \u00B7 last '+esc(ci.when):'')+(ci.by? ' \u00B7 '+esc(ci.by):'')+(ci.outcome? ' \u00B7 '+esc(ci.outcome):'')+(ci.pending? ' <span class="pend">\u23F3 '+ci.pending+' not synced</span>':'')+'</div>' : '<div class="calls none">\uD83D\uDCDE No calls logged yet</div>')+
       '<div class="grp" style="color:'+col+'">'+esc(l.group)+'</div>'+
       '<div class="meta">\uD83D\uDCCD <b>'+esc(l.branch)+'</b> &nbsp; \u23F3 until <b>'+esc(l.deadline)+'</b><br>'+
@@ -401,6 +468,7 @@ function render(err){
       (l.removed? '<button class="btn rst" data-restore="'+esc(l.id)+'">\u21A9 Restore to call list</button>' : (l.visited==="Yes"? '<button class="btn rmv" style="background:#1E6B2E;color:#fff;border-color:#1E6B2E" data-remove="'+esc(l.id)+'" data-reason="Visited (job order match)">\u2705 Confirm visit &amp; remove</button>' : '<button class="btn rmv" data-remove="'+esc(l.id)+'">\uD83D\uDDD1 Remove from list</button>'))+'</div></div>';
   }).join("") : (current==="REMOVED"? '<div class="empty">No removed leads.</div>' : '<div class="empty">No leads to call in this group \uD83C\uDF89</div>');
   var now=new Date().toLocaleTimeString("en-PH",{timeZone:"Asia/Manila",hour:"numeric",minute:"2-digit"});
+  paintCallNow(); jumpToLead();
   document.getElementById("status").textContent=dataSource+" \u00B7 "+leads.filter(function(l){return !l.removed;}).length+" to call \u00B7 "+leads.filter(function(l){return l.removed;}).length+" removed \u00B7 updated "+now+" (Manila) \u00B7 quiet auto-refresh every 1 min";
 }
 // ---- Call / Text: hand off to the dialer without leaving the app ----
@@ -443,6 +511,8 @@ window.addEventListener("pagehide",saveNow);
 window.addEventListener("pageshow",function(e){ if (e.persisted) { restoreScroll(); onReturn(); } });
 document.getElementById("refresh").onclick=function(){ load(true); };
 setInterval(function(){ if(!document.hidden) load(true); }, AUTO_REFRESH_MS);
+setInterval(tickDue, 15000);
+setTimeout(tickDue, 800);
 // ---- Exit / log out ----
 document.getElementById("exit").onclick=function(){
   if (!confirm("Log out of Santos Leads? Saved tab and position will be cleared. Your call log and sync setup stay saved on this phone.")) return;
