@@ -177,7 +177,11 @@ body.home #homepanel{display:block;margin:0 12px 16px;padding:8px 12px 16px;bord
 body.home .tabs,body.home #iambar,body.home #callnow,body.home #timingleg,body.home #tools,body.home main,body.home .help,body.home #jc{display:none !important}
 body.home #status{display:none !important}
 #homestat{color:#fff;font-size:13px;font-weight:600;padding:4px 2px 0;line-height:1.4}
-/* v20: hourly upload line at the top of the front screen */
+/* v20/v21: hourly upload line at the top of the front screen */
+#uploadstat .open-new{display:block;width:100%;margin-top:8px;padding:10px;border:0;border-radius:10px;background:#1565C0;color:#fff;font-size:15px;font-weight:800}
+.st.newup{background:#1565C0;color:#fff}
+#filternote{background:#FFF3CD;color:#000;border-radius:12px;padding:10px 12px;margin:0 0 10px;font-size:14px;line-height:1.4}
+#filternote button{margin-top:6px;padding:8px 10px;border:0;border-radius:8px;background:#0B3C5D;color:#fff;font-weight:700}
 #uploadstat{background:#fff;color:#000;border-radius:14px;padding:12px 14px;margin:0 0 10px;box-shadow:0 1px 3px rgba(0,0,0,.12);line-height:1.4}
 #uploadstat .u1{font-size:15px;font-weight:800}
 #uploadstat .u1 b{color:#1565C0}
@@ -278,6 +282,7 @@ var BRKEY="santosLeads.branch.v1";
 var SHEETKEY="santosLeads.sheet.v1";
 var BRANCHES=[{id:"",label:"All branches"},{id:"Maypajo",label:"Maypajo"},{id:"Paso de Blas",label:"Paso de Blas"},{id:"Quiapo",label:"Quiapo"},{id:"SBP",label:"SBP / San Bartolome"},{id:"Symaco",label:"Symaco"},{id:"Tangos",label:"Tangos"},{id:"__none",label:"No branch yet (ask nearest branch)"}];
 var openGroup="";
+(function(){ try{ if (!localStorage.getItem("santosLeads.v21reset")){ localStorage.setItem(BRKEY,""); localStorage.setItem("santosLeads.showMine.v2","all"); localStorage.setItem("santosLeads.v21reset","1"); } }catch(e){} })();
 function selectedBranch(){ try{ return localStorage.getItem(BRKEY)||""; }catch(e){ return ""; } }
 function setBranch(v){ try{ localStorage.setItem(BRKEY, v||""); }catch(e){} }
 function branchNorm(s){
@@ -291,7 +296,12 @@ function branchNorm(s){
   if (/tangos/.test(s)) return "Tangos";
   return s;
 }
+// v21: leads uploaded today, Manila time ("NEW") float to the top of every list, and the NEW view shows all branches.
+function addedMs(l){ return l&&l.addedAt? parseTs(l.addedAt) : 0; }
+function manilaDayStart(){ var d=new Date(Date.now()+8*3600e3); return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())-8*3600e3; }
+function isRecentUpload(l){ var t=addedMs(l); return !!(t && t>=manilaDayStart() && t<=Date.now()+120e3); }
 function passBranch(l){
+  if (openGroup==="NEW") return true;
   var want=selectedBranch();
   if (!want) return true;
   var use=branchNorm(l.branch)||branchNorm(l.nearest);
@@ -313,6 +323,7 @@ function productGroupOf(l){
 }
 function productLabel(key){
   if (key==="SETTINGS") return "SETTINGS";
+  if (key==="NEW") return "\uD83C\uDD95 NEW UPLOADS TODAY (all branches)";
   if (key==="OTHER") return OTHER_GROUP.label;
   for (var i=0;i<PRODUCT_GROUPS.length;i++) if (PRODUCT_GROUPS[i].key===key) return PRODUCT_GROUPS[i].label;
   return key||"";
@@ -325,8 +336,8 @@ function productInterest(key){
 function otherNeeded(){ return (leads||[]).some(function(l){ return productGroupOf(l)==="OTHER"; }); }
 function homeGroups(){ return PRODUCT_GROUPS.concat(otherNeeded()? [OTHER_GROUP] : []); }
 function isNeedToCall(l){ return !!(l && !l.removed && !isVisited(l) && !isStopped(l)); }
-function passProduct(l){ return !openGroup || openGroup==="SETTINGS" || productGroupOf(l)===openGroup; }
-function passCaller(l){ return isMine(l); }
+function passProduct(l){ if (openGroup==="NEW") return isRecentUpload(l); return !openGroup || openGroup==="SETTINGS" || productGroupOf(l)===openGroup; }
+function passCaller(l){ return openGroup==="NEW" ? true : isMine(l); }
 function inGroupBranch(l, key){ return productGroupOf(l)===(key||openGroup) && passBranch(l) && passCaller(l); }
 function needToCallCount(key){ return (leads||[]).filter(function(l){ return inGroupBranch(l, key) && isNeedToCall(l); }).length; }
 function groupVisibleLeads(tab){ tab=tab||current; return (leads||[]).filter(function(l){ return inTab(l,tab) && passBranch(l) && passProduct(l) && passCaller(l); }); }
@@ -378,6 +389,7 @@ function renderHome(){
   html+='<div id="homestat"></div>';
   el.innerHTML=html;
   Array.prototype.forEach.call(el.querySelectorAll("[data-pg]"), function(btn){ btn.onclick=function(){ openProduct(btn.getAttribute("data-pg")); }; });
+  var sab=document.getElementById("showallbtn"); if (sab) sab.onclick=function(){ setBranch(""); try{ localStorage.setItem(FILTERKEY,"all"); }catch(e){} render(); };
   var box=document.getElementById("callnow"); if (box){ box.style.display="none"; box.innerHTML=""; }
   var leg=document.getElementById("timingleg"); if (leg){ leg.style.display="none"; leg.innerHTML=""; }
   var list=document.getElementById("list"); if (list) list.innerHTML="";
@@ -391,6 +403,14 @@ function uploadStats(){
   var by={}; hour.forEach(function(l){ var b=branchNorm(l.branch)||branchNorm(l.nearest)||"No branch yet"; by[b]=(by[b]||0)+1; });
   return {n:hour.length, today:today, by:by, have:have};
 }
+function filterNoteHtml(){
+  var total=(leads||[]).filter(function(l){ return !l.removed; }).length;
+  var shown=(leads||[]).filter(function(l){ return !l.removed && passBranch(l) && isMine(l); }).length;
+  var br=selectedBranch(), mine=showMine()&&iAm();
+  if (shown===total) return '<div id="filternote" style="background:#E8F5E9">All '+total+' leads on the list (all branches). Nothing is hidden.</div>';
+  var what=[]; if (br) what.push('Branch: '+esc(br==="__none"?"No branch yet":br)); if (mine) what.push('Only '+esc(iAm())+'\u2019s calls');
+  return '<div id="filternote">\u26A0\uFE0F Filter on ('+what.join(' \u00b7 ')+'): showing <b>'+shown+'</b> of <b>'+total+'</b> leads. The other '+(total-shown)+' are not removed, just hidden on this phone.<br><button type="button" id="showallbtn">Show ALL leads (all branches)</button></div>';
+}
 function uploadStatHtml(){
   if (usingDemo) return "";
   var s=uploadStats();
@@ -398,9 +418,11 @@ function uploadStatHtml(){
   var order=["Maypajo","Paso de Blas","Quiapo","SBP","Symaco","Tangos","No branch yet"];
   var parts=order.filter(function(b){ return s.by[b]; }).map(function(b){ return esc(b)+" "+s.by[b]; });
   Object.keys(s.by).forEach(function(b){ if (order.indexOf(b)<0) parts.push(esc(b)+" "+s.by[b]); });
-  return '<div id="uploadstat"><div class="u1">\u2B06 Uploaded in the last hour: <b>'+s.n+' new lead'+(s.n===1?'':'s')+'</b></div>'+
+  var recent=(leads||[]).filter(function(l){ return !l.removed && isRecentUpload(l); }).length;
+  var btn=recent? '<button type="button" class="open-new" data-pg="NEW">\uD83C\uDD95 See the '+recent+' new upload'+(recent===1?'':'s')+' today</button>' : '';
+  return filterNoteHtml()+'<div id="uploadstat"><div class="u1">\u2B06 Uploaded in the last hour: <b>'+s.n+' new lead'+(s.n===1?'':'s')+'</b></div>'+
     '<div class="u2">Last sync '+esc(when)+' (Manila) \u00b7 Today: '+s.today+' new'+(s.have?'':' \u00b7 upload times not in the Sheet yet')+'</div>'+
-    (parts.length? '<div class="u3">'+parts.join(' \u00b7 ')+'</div>' : '')+'</div>';
+    (parts.length? '<div class="u3">'+parts.join(' \u00b7 ')+'</div>' : '')+btn+'</div>';
 }
 function renderSettings(){
   renderBackBar("SETTINGS");
@@ -815,7 +837,7 @@ function interestOf(l){ return String(l.group||"").trim() || "ask on call"; }
 function callTimeLabel(l){ var d=dueInfo(l), start=(d&&d.start)||parseSlot(l.slot); if (start){ var parts=new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Manila",weekday:"short",hour:"numeric",minute:"2-digit",hour12:true}).formatToParts(new Date(start)), o={}; parts.forEach(function(p){ o[p.type]=p.value; }); var ap=(o.dayPeriod||"").replace(/\./g,"").toUpperCase(); return (o.weekday||"")+" "+(o.hour||"")+":"+(o.minute||"")+(ap? " "+ap:""); } var t=String(l.docTime||l.pref||"").trim(); if (t && !/^\s*any ?time/i.test(t) && !/^\s*open slot/i.test(t)) return t; return "Open slot"; }
 function shortDueLabel(d){ if (!d) return ""; if (d.state==="paused") return "Paused"; if (d.state==="late") return "LATE "+fmtMins(-d.mins); if (d.state==="due") return "DUE NOW"; if (d.state==="soon" || d.state==="later") return "in "+fmtMins(d.mins); if (d.state==="called") return "Called today"; return d.label||""; }
 function extraLine(l){ var bits=[]; if (String(l.age||"").trim()) bits.push("Age "+String(l.age).trim()); else bits.push("Age: ask (39+ for free reading)"); if (String(l.loc||"").trim()) bits.push(String(l.loc).trim()); else bits.push("Address: not given \u2014 ask on call"); if (isPlaceholderName(l.name)){ var ph=displayPhone(l); if (ph) bits.push("Phone "+ph); } var who=assignedCaller(l); if (who) bits.push(who); return bits.join(" \u00B7 "); }
-function tagBits(l){ var t=""; if (l.elig==="Yes") t+=' <span class="st elig">39+ FREE</span>'; else if (l.elig==="No") t+=' <span class="st noelig">under 39</span>'; if (/^y/i.test(l.kita||"")) t+=' <span class="st kita">KITA</span>'; return t; }
+function tagBits(l){ var t=""; if (isRecentUpload(l)) t+=' <span class="st newup">\uD83C\uDD95 NEW '+esc(fmtTs(addedMs(l)))+'</span>'; if (l.elig==="Yes") t+=' <span class="st elig">39+ FREE</span>'; else if (l.elig==="No") t+=' <span class="st noelig">under 39</span>'; if (/^y/i.test(l.kita||"")) t+=' <span class="st kita">KITA</span>'; return t; }
 function leadStack(l){ var d=dueInfo(l), pill=shortDueLabel(d), extra=extraLine(l), tags=tagBits(l), fu=followUpLine(l); return '<div class="ldet"><div class="l1"><span class="ltime">'+esc(callTimeLabel(l))+'</span>'+(pill? ' <span class="spill '+(d&&d.state?esc(d.state):'')+'" data-duepill="'+esc(l.id)+'">'+esc(pill)+'</span>':'')+'</div><div class="l2">'+esc(displayName(l))+(l.priority? ' <span class="badge '+esc(l.priority)+'">'+esc(l.priority)+'</span>':'')+'</div><div class="l3">Branch: '+esc(branchOfChoice(l))+'</div><div class="l4">Interest: '+esc(interestOf(l))+tags+'</div>'+(extra? '<div class="l5">'+esc(extra)+'</div>':'')+(fu? '<div class="l6'+(fu.cls? ' '+fu.cls:'')+'">'+esc(fu.text)+'</div>':'')+'</div>'; }
 function paintCallNow(){ var box=document.getElementById("callnow"), leg=document.getElementById("timingleg"); if (!box) return; if (!openGroup || openGroup==="SETTINGS"){ box.style.display="none"; box.innerHTML=""; if (leg){ leg.style.display="none"; leg.innerHTML=""; } return; } var items=leads.filter(function(l){ var d=dueInfo(l); return dueActive(d) && isMine(l) && passBranch(l) && passProduct(l); }); if (!items.length){ box.style.display="none"; box.innerHTML=""; if (leg){ leg.style.display="block"; leg.innerHTML=legendHtml(false); } return; } items.sort(function(a,b){ return (dueInfo(a).mins)-(dueInfo(b).mins); }); box.style.display="block"; if (leg) leg.style.display="none"; box.innerHTML='<b class="ttl">\uD83D\uDD14 Call now \u00B7 '+items.length+' lead'+(items.length>1?'s':'')+' due to call</b>'+legendHtml(true)+items.map(function(l){ return '<div class="cn"><div class="cn-top">'+leadStack(l)+(l.phone? '<a class="'+timingClass(l,"cncall")+'" href="tel:'+esc(l.phone)+'" data-act="call" data-id="'+esc(l.id)+'" data-name="'+esc(l.name)+'" data-row="'+esc(l.row||'')+'">\uD83D\uDCDE Call</a>':'')+'</div>'+callsLine(l)+quickBtns(l)+'</div>'; }).join(""); }
 function tickDue(){ if (document.getElementById("bye") && document.getElementById("bye").style.display==="block") return; leads.forEach(function(l){ if (!isMine(l)) return; var d=dueInfo(l); if (!dueActive(d)) return; var key=l.id+"@"+d.start; if (d.mins<=0 && d.mins>=-1 && !hasFired(key+"@start")){ markFired(key+"@start"); fireNote("Call now: "+l.name, (l.ctype==="Specific time"?"Preferred call time is now":"Call slot is now")+" \u00B7 "+(l.phone||""), "slot-"+l.id); } else if (d.state==="soon" && !hasFired(key+"@soon")){ markFired(key+"@soon"); fireNote("Call in "+d.mins+" min: "+l.name, assignedCaller(l)+" \u00B7 "+(l.phone||"")+" \u00B7 open Santos Leads to call", "soon-"+l.id); } }); paintCallNow(); var pills=document.querySelectorAll("[data-duepill]"); Array.prototype.forEach.call(pills,function(el){ var l=findLead(el.getAttribute("data-duepill")); var d=l&&dueInfo(l); if (d) el.textContent=shortDueLabel(d); }); }
@@ -883,7 +905,8 @@ function render(err){
   function vrank(l){ return l.visited==="Yes"?2:(l.visited==="Needs review"?1:0); }
   function drank(l){ var d=dueInfo(l); return dueActive(d)?0:1; }
   function nrank(l){ return isNeedToCall(l)?0:1; }
-  list.sort(function(a,b){ return (nrank(a)-nrank(b)) || (drank(a)-drank(b)) || (vrank(a)-vrank(b)) || ((a.ctype==="Specific time"?0:1)-(b.ctype==="Specific time"?0:1)) || ((a.priority==="HOT"?0:1)-(b.priority==="HOT"?0:1)) || (b._score-a._score) || (a._i-b._i); });
+  function urank(l){ return isRecentUpload(l)?0:1; }
+  list.sort(function(a,b){ return (nrank(a)-nrank(b)) || (drank(a)-drank(b)) || (urank(a)-urank(b)) || (urank(a)===0? addedMs(b)-addedMs(a) : 0) || (vrank(a)-vrank(b)) || ((a.ctype==="Specific time"?0:1)-(b.ctype==="Specific time"?0:1)) || ((a.priority==="HOT"?0:1)-(b.priority==="HOT"?0:1)) || (b._score-a._score) || (a._i-b._i); });
   var lastType=null;
   var listParts = list.length? list.map(function(l){
     var dnow=dueInfo(l), dueOn=dueActive(dnow);
