@@ -177,6 +177,12 @@ body.home #homepanel{display:block;margin:0 12px 16px;padding:8px 12px 16px;bord
 body.home .tabs,body.home #iambar,body.home #callnow,body.home #timingleg,body.home #tools,body.home main,body.home .help,body.home #jc{display:none !important}
 body.home #status{display:none !important}
 #homestat{color:#fff;font-size:13px;font-weight:600;padding:4px 2px 0;line-height:1.4}
+/* v20: hourly upload line at the top of the front screen */
+#uploadstat{background:#fff;color:#000;border-radius:14px;padding:12px 14px;margin:0 0 10px;box-shadow:0 1px 3px rgba(0,0,0,.12);line-height:1.4}
+#uploadstat .u1{font-size:15px;font-weight:800}
+#uploadstat .u1 b{color:#1565C0}
+#uploadstat .u2{font-size:13px;color:#333;margin-top:2px}
+#uploadstat .u3{font-size:13px;color:#000;font-weight:700;margin-top:4px}
 body.settings #callnow,body.settings #timingleg,body.settings #iambar,body.settings #tools,body.settings .tabs,body.settings .help{display:none !important}
 body.settings #status{padding:8px 14px}
 #settingsbox{background:#fff;border-radius:14px;padding:14px;margin:10px 0;color:#000;box-shadow:0 1px 3px rgba(0,0,0,.08)}
@@ -270,7 +276,7 @@ var VIEW_TABS = [
 ];
 var BRKEY="santosLeads.branch.v1";
 var SHEETKEY="santosLeads.sheet.v1";
-var BRANCHES=[{id:"",label:"All branches"},{id:"Maypajo",label:"Maypajo"},{id:"Paso de Blas",label:"Paso de Blas"},{id:"Quiapo",label:"Quiapo"},{id:"SBP",label:"SBP / San Bartolome"},{id:"Symaco",label:"Symaco"},{id:"Tangos",label:"Tangos"}];
+var BRANCHES=[{id:"",label:"All branches"},{id:"Maypajo",label:"Maypajo"},{id:"Paso de Blas",label:"Paso de Blas"},{id:"Quiapo",label:"Quiapo"},{id:"SBP",label:"SBP / San Bartolome"},{id:"Symaco",label:"Symaco"},{id:"Tangos",label:"Tangos"},{id:"__none",label:"No branch yet (ask nearest branch)"}];
 var openGroup="";
 function selectedBranch(){ try{ return localStorage.getItem(BRKEY)||""; }catch(e){ return ""; } }
 function setBranch(v){ try{ localStorage.setItem(BRKEY, v||""); }catch(e){} }
@@ -289,6 +295,7 @@ function passBranch(l){
   var want=selectedBranch();
   if (!want) return true;
   var use=branchNorm(l.branch)||branchNorm(l.nearest);
+  if (want==="__none") return !use;
   return use===want;
 }
 function productGroupOf(l){
@@ -324,7 +331,7 @@ function inGroupBranch(l, key){ return productGroupOf(l)===(key||openGroup) && p
 function needToCallCount(key){ return (leads||[]).filter(function(l){ return inGroupBranch(l, key) && isNeedToCall(l); }).length; }
 function groupVisibleLeads(tab){ tab=tab||current; return (leads||[]).filter(function(l){ return inTab(l,tab) && passBranch(l) && passProduct(l) && passCaller(l); }); }
 function slimLead(l){
-  var o={}, keys=["id","priority","name","phone","group","branch","deadline","status","pref","row","loc","nearest","docTime","kita","age","elig","summary","score","slot","ctype","msg","callCount","lastCalled","lastBy","lastOutcome","removed","visited","visitDate","visitBranch","joAmount","matchBasis"];
+  var o={}, keys=["id","priority","name","phone","group","branch","deadline","status","pref","row","loc","nearest","docTime","kita","age","elig","summary","score","slot","ctype","msg","callCount","lastCalled","lastBy","lastOutcome","removed","visited","visitDate","visitBranch","joAmount","matchBasis","addedAt"];
   keys.forEach(function(k){ o[k]=l[k]; });
   return o;
 }
@@ -332,14 +339,14 @@ function saveSheetCache(){
   if (usingDemo || !leads || !leads.length) return;
   try{
     var logRows=(serverLog||[]).map(function(e){ return [e.ts,e.leadId,e.name,e.phone,e.caller,e.outcome,e.notes||"",e.via||"",e.uid||""]; });
-    localStorage.setItem(SHEETKEY, JSON.stringify({saved:Date.now(), source:dataSource, leads:leads.map(slimLead), log:logRows}));
+    localStorage.setItem(SHEETKEY, JSON.stringify({saved:Date.now(), synced:lastSyncAt||Date.now(), source:dataSource, leads:leads.map(slimLead), log:logRows}));
   }catch(e){ window.__cacheErr=String(e.message||e); }
 }
 function loadSheetCache(){
   try{
     var d=JSON.parse(localStorage.getItem(SHEETKEY)||"null");
     if (!d || !d.leads || !d.leads.length) return false;
-    leads=d.leads;
+    leads=d.leads; lastSyncAt=d.synced||d.saved||0;
     if (d.log) setLog(d.log);
     var when=d.saved? new Date(d.saved).toLocaleString("en-PH",{timeZone:"Asia/Manila",hour:"numeric",minute:"2-digit",month:"short",day:"numeric"}):"";
     dataSource="Saved on this phone"+(when? " · "+when:"");
@@ -365,7 +372,8 @@ function hideBackBar(){ var el=document.getElementById("backbar"); if (!el) retu
 function renderHome(){
   var el=document.getElementById("homepanel"); if (!el) return;
   hideBackBar();
-  var html=homeGroups().map(function(g){ return '<button type="button" class="pg-btn" data-pg="'+esc(g.key)+'"><span>'+esc(g.label)+'</span><span class="n">'+needToCallCount(g.key)+'</span></button>'; }).join("");
+  var html=uploadStatHtml();
+  html+=homeGroups().map(function(g){ return '<button type="button" class="pg-btn" data-pg="'+esc(g.key)+'"><span>'+esc(g.label)+'</span><span class="n">'+needToCallCount(g.key)+'</span></button>'; }).join("");
   html+='<button type="button" class="pg-btn settings" data-pg="SETTINGS"><span>SETTINGS</span></button>';
   html+='<div id="homestat"></div>';
   el.innerHTML=html;
@@ -373,6 +381,26 @@ function renderHome(){
   var box=document.getElementById("callnow"); if (box){ box.style.display="none"; box.innerHTML=""; }
   var leg=document.getElementById("timingleg"); if (leg){ leg.style.display="none"; leg.innerHTML=""; }
   var list=document.getElementById("list"); if (list) list.innerHTML="";
+}
+// v20: "Uploaded in the last hour" = leads whose Sheet "Added At" time is within the last 60 minutes (all branches).
+function uploadStats(){
+  var now=Date.now(), hourAgo=now-3600e3, d=new Date(now+8*3600e3), dayStart=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())-8*3600e3;
+  var hour=[], today=0, have=false;
+  (leads||[]).forEach(function(l){ if (!l.addedAt) return; var t=parseTs(l.addedAt); if (!t) return; have=true;
+    if (t>hourAgo && t<=now+120e3) hour.push(l); if (t>=dayStart && t<=now+120e3) today++; });
+  var by={}; hour.forEach(function(l){ var b=branchNorm(l.branch)||branchNorm(l.nearest)||"No branch yet"; by[b]=(by[b]||0)+1; });
+  return {n:hour.length, today:today, by:by, have:have};
+}
+function uploadStatHtml(){
+  if (usingDemo) return "";
+  var s=uploadStats();
+  var when=lastSyncAt? new Date(lastSyncAt).toLocaleTimeString("en-PH",{timeZone:"Asia/Manila",hour:"numeric",minute:"2-digit"}) : "not yet";
+  var order=["Maypajo","Paso de Blas","Quiapo","SBP","Symaco","Tangos","No branch yet"];
+  var parts=order.filter(function(b){ return s.by[b]; }).map(function(b){ return esc(b)+" "+s.by[b]; });
+  Object.keys(s.by).forEach(function(b){ if (order.indexOf(b)<0) parts.push(esc(b)+" "+s.by[b]); });
+  return '<div id="uploadstat"><div class="u1">\u2B06 Uploaded in the last hour: <b>'+s.n+' new lead'+(s.n===1?'':'s')+'</b></div>'+
+    '<div class="u2">Last sync '+esc(when)+' (Manila) \u00b7 Today: '+s.today+' new'+(s.have?'':' \u00b7 upload times not in the Sheet yet')+'</div>'+
+    (parts.length? '<div class="u3">'+parts.join(' \u00b7 ')+'</div>' : '')+'</div>';
 }
 function renderSettings(){
   renderBackBar("SETTINGS");
@@ -473,12 +501,12 @@ function fromRow(r,idx){
   var g=function(name,fallback){ var i=idx[name]; return i===undefined? (fallback===undefined?"":r[fallback]) : r[i]; };
   var l={id:g("Lead ID",0),priority:g("Priority",1),name:g("Name",2),phone:(g("Phone",3)||"").replace(/[^\d+]/g,""),group:g("Interest Group",4),
          branch:g("Branch",5),deadline:g("Visit Deadline",6),status:g("Status",7),pref:g("Preferred Call Time",8),row:g("Leads Row",9),loc:g("Location/Area",10),nearest:g("Nearest Branch",11),docTime:g("Best Time for Doc's Call",12),kita:g("KITA Comment",13),age:g("Age",14),elig:g("39+ Eligible",15),summary:g("Chat Summary (for staff)",16),score:Number(g("Lead Score",17))||0,slot:g("Calendar Slot",18),ctype:g("Call Type",19)||((g("Best Time for Doc's Call",12)||"").trim()&&!/^\s*any ?time/i.test(g("Best Time for Doc's Call",12))?"Specific time":"Open slot"),msg:idx["SMS Message"]!==undefined? r[idx["SMS Message"]]:"",
-         callCount:Number(g("Call Count",20))||0,lastCalled:g("Last Called (date/time)",21)||"",lastBy:g("Last Called By",22)||"",lastOutcome:g("Last Outcome",23)||"",removed:/^Removed/.test(g("List State",24)||""),/*VISITED-PATCH*/visited:(idx["Visited"]!==undefined? r[idx["Visited"]]:"")||"",visitDate:(idx["Visit Date"]!==undefined? r[idx["Visit Date"]]:"")||"",visitBranch:(idx["Visit Branch"]!==undefined? r[idx["Visit Branch"]]:"")||"",joAmount:(idx["Job Order Amount"]!==undefined? r[idx["Job Order Amount"]]:"")||"",matchBasis:(idx["Match Basis"]!==undefined? r[idx["Match Basis"]]:"")||""};
+         callCount:Number(g("Call Count",20))||0,lastCalled:g("Last Called (date/time)",21)||"",lastBy:g("Last Called By",22)||"",lastOutcome:g("Last Outcome",23)||"",removed:/^Removed/.test(g("List State",24)||""),/*VISITED-PATCH*/visited:(idx["Visited"]!==undefined? r[idx["Visited"]]:"")||"",visitDate:(idx["Visit Date"]!==undefined? r[idx["Visit Date"]]:"")||"",visitBranch:(idx["Visit Branch"]!==undefined? r[idx["Visit Branch"]]:"")||"",joAmount:(idx["Job Order Amount"]!==undefined? r[idx["Job Order Amount"]]:"")||"",matchBasis:(idx["Match Basis"]!==undefined? r[idx["Match Basis"]]:"")||"",/*v20*/addedAt:(idx["Added At"]!==undefined? r[idx["Added At"]]:"")||""};
   if (!l.msg) l.msg=fill(TEMPLATES[l.group],l);
   return l;
 }
 function apiCfg(){ try { var a=JSON.parse(localStorage.getItem(AKEY)||"null"); return a&&a.url&&a.key? a : null; } catch(e){ return null; } }
-var serverLog=[], serverUids={}, dataSource="", liveOk=false;
+var serverLog=[], serverUids={}, dataSource="", liveOk=false, lastSyncAt=0;
 function setLog(rows){ serverLog=rows.map(function(r){ return {ts:r[0],ms:parseTs(r[0]),leadId:r[1],name:r[2],phone:r[3],caller:r[4],outcome:r[5],notes:r[6]||"",via:r[7]||"",uid:r[8]||""}; }); serverUids={}; serverLog.forEach(function(e){ if (e.uid) serverUids[e.uid]=1; }); }
 // ---- Private Sheet read for signed-in Google accounts (no public sharing, nothing stored in the repo) ----
 // Uses the Sheets "gviz" JSONP endpoint: works on a phone browser signed in to a Google account that has access
@@ -595,7 +623,7 @@ function load(quiet){
       leads=rows.filter(function(r){return r.join("").trim()!=="";}).map(function(r){return fromRow(r,idx);}).filter(function(l){return l.name;});
       setLog([]); dataSource="Live from Sheet"; usingDemo=false; lastErr="";
     }).catch(function(){ throw e1; }); });
-  p.then(function(){ liveOk=true; if (!DEMO_ON) leads=leads.filter(function(l){ return !isTestLead(l); }); announceNew(detectNew(leads)); saveSheetCache(); keepView(render); }).catch(function(e){
+  p.then(function(){ liveOk=true; lastSyncAt=Date.now(); if (!DEMO_ON) leads=leads.filter(function(l){ return !isTestLead(l); }); announceNew(detectNew(leads)); saveSheetCache(); keepView(render); }).catch(function(e){
     lastErr=String(e.message||e);
     if (leads.length && !usingDemo){ keepView(render); }
     else if (DEMO_ON){ leads=DEMO.map(function(r){return fromRow(r,{});}); setLog(DEMO_LOG); usingDemo=true; dataSource="Demo data (TEST)"; if (leads.length) announceNew(detectNew(leads)); keepView(render); }
@@ -832,7 +860,7 @@ function render(err){
   var now=new Date().toLocaleTimeString("en-PH",{timeZone:"Asia/Manila",hour:"numeric",minute:"2-digit"});
   if (mode==="home"){
     renderHome();
-    var hs=document.getElementById("homestat"); if (hs) hs.textContent=dataSource+" \u00b7 updated "+now+" (Manila) \u00b7 auto-refresh every 1 min";
+    var hs=document.getElementById("homestat"); if (hs) hs.textContent=dataSource+" \u00b7 updated "+(lastSyncAt? new Date(lastSyncAt).toLocaleTimeString("en-PH",{timeZone:"Asia/Manila",hour:"numeric",minute:"2-digit"}) : now)+" (Manila) \u00b7 auto-refresh every 1 min";
     renderTools();
     return;
   }
